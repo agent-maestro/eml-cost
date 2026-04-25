@@ -32,7 +32,7 @@ For the full Pfaffian profile breakdown::
 """
 from __future__ import annotations
 
-from .analyze import AnalyzeResult, Corrections, analyze, measure
+from .analyze import AnalyzeResult, Corrections, analyze, fingerprint, measure
 from .core import (
     PFAFFIAN_NOT_EML_R,
     eml_depth,
@@ -42,11 +42,12 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "__version__",
     "analyze",
+    "fingerprint",
     "measure",
     "AnalyzeResult",
     "Corrections",

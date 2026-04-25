@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.1.1] — 2026-04-25 — Pfaffian fingerprint
+
+### Added
+- `fingerprint(expr) -> str`: compact structural-cost hash of the
+  form `p<r>-d<depth>-w<max_path>-c<correction_sum>-h<6hex>`.
+  Two expressions colliding on this hash are guaranteed to have
+  identical Pfaffian profile values; the 6-hex tail folds in
+  Pfaffian-not-EML status + tree-shape signature so Bessel and
+  Airy don't accidentally collide despite identical numeric axes.
+  Enables expression-dedup at scale, equivalence-class caching,
+  and "have I analyzed this before?" lookup in O(1).
+
+### Tests
+- 8 new cases in `tests/test_fingerprint.py`. Full suite: 50 passing.
+
 ## [0.1.0] — 2026-04-25 — First stable release
 
 **Status.** Stable beta. Patent pending.

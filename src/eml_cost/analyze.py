@@ -21,7 +21,7 @@ from .core import (
 )
 
 
-__all__ = ["AnalyzeResult", "Corrections", "analyze", "measure"]
+__all__ = ["AnalyzeResult", "Corrections", "analyze", "fingerprint", "measure"]
 
 
 @dataclass(frozen=True)
@@ -209,6 +209,56 @@ def analyze(expr: Union[str, sp.Basic]) -> AnalyzeResult:
         predicted_depth=predicted,
         is_pfaffian_not_eml=non_eml,
     )
+
+
+def fingerprint(expr: Union[str, sp.Basic]) -> str:
+    """Compact structural-cost hash for an expression.
+
+    Returns a short, human-readable string of the form
+    ``p<r>-d<depth>-w<max_path>-c<correction_sum>-h<6hex>`` — for
+    example, ``p3-d2-w1-c0-h7f3a91``.
+
+    Two expressions colliding on this fingerprint are guaranteed to
+    have identical Pfaffian profile **values** (pfaffian_r, max_path_r,
+    eml_depth, the three correction terms, structural_overhead, and
+    the Pfaffian-but-not-EML flag). The 6-hex tail folds in the
+    Pfaffian-not-EML status and a stable hash of the
+    ``str(expression)`` so that two expressions with the same numeric
+    profile but different tree shapes do not accidentally collide.
+
+    Use cases:
+      * dedup-by-cost in caches keyed on expression equivalence;
+      * "have I analyzed this before?" lookup in O(1);
+      * grouping expressions into Pfaffian-cost equivalence classes
+        for batch processing or visual diff.
+
+    The fingerprint is **not** a guarantee of mathematical equivalence:
+    it does not prove that two same-fingerprint expressions are equal.
+    For that, use :func:`eml_rewrite.verify_equivalence`.
+    """
+    import hashlib
+
+    result = analyze(expr)
+    correction_sum = (result.corrections.c_osc
+                      + result.corrections.c_composite
+                      - result.corrections.delta_fused)
+
+    # 6-hex tail folds non-numeric structural information so two
+    # expressions with the same per-axis numbers but different tree
+    # shapes (e.g., LambertW(x) vs Bessel J0(x), both r=2 or r=3 in
+    # the extension class) get distinguishable fingerprints.
+    tail_material = (
+        f"{result.is_pfaffian_not_eml}|"
+        f"{type(result.expression).__name__}|"
+        f"{str(result.expression)}"
+    )
+    tail = hashlib.blake2b(tail_material.encode("utf-8"), digest_size=3).hexdigest()
+
+    return (f"p{result.pfaffian_r}"
+            f"-d{result.eml_depth}"
+            f"-w{result.max_path_r}"
+            f"-c{correction_sum}"
+            f"-h{tail}")
 
 
 def measure(expr: Any) -> int:
