@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.2.0] — 2026-04-25 — `@cache_by_fingerprint` (cost-class memoization)
+
+### Added
+- `@cache_by_fingerprint(maxsize=N)`: LRU memoization decorator
+  keyed on the **axes portion** of the Pfaffian fingerprint for
+  SymPy arguments (and normal hash for everything else). Two
+  expressions in the same cost equivalence class share a cache
+  slot — so `slow(sin(x))` and `slow(sin(y))` are a single entry.
+  Wrapper exposes `.cache_info()` returning `FingerprintCacheInfo`
+  and `.cache_clear()`. Unhashable secondary args bypass the
+  cache transparently rather than crashing.
+- `fingerprint_axes(expr) -> str`: helper returning the leading
+  `p…-d…-w…-c…` block of `fingerprint(expr)` (no tail hash).
+  Useful as a manual cache key when the decorator's calling
+  convention isn't a fit.
+- `FingerprintCacheInfo` frozen dataclass exporting through the
+  package root.
+
+Use case: cost-driven analyses where the result depends only on
+the Pfaffian profile (e.g., per-cost-class measurement, model
+profiling on synthetic expression families). Standard
+`functools.lru_cache` would miss on every renamed variant; this
+decorator collapses them.
+
+**Caveat documented.** The decorator can't enforce that the wrapped
+function depends only on cost class. If the function inspects
+specific symbol names or values, hits will return wrong results.
+Use only when the cost-class-only contract is intentional.
+
+### Tests
+- 11 new cases in `tests/test_cache_by_fingerprint.py`. Full
+  suite: 71 passing.
+
 ## [0.1.2] — 2026-04-25 — `@costlimit` decorator
 
 ### Added
