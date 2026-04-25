@@ -1,6 +1,6 @@
 # eml-cost
 
-**Pre-release alpha. Patent pending.** Source-available; see LICENSE.
+**Stable beta. Patent pending.** Source-available; see LICENSE.
 
 Pfaffian chain order and EML routing depth for symbolic expressions —
 a programmatic complexity measure on SymPy expression trees.
@@ -8,11 +8,8 @@ a programmatic complexity measure on SymPy expression trees.
 ## Installation
 
 ```bash
-pip install --pre eml-cost
+pip install eml-cost
 ```
-
-The `--pre` flag is required while we're on `0.1.0a0`. Once the first
-stable release publishes, plain `pip install eml-cost` will work.
 
 For local development:
 
@@ -24,6 +21,41 @@ pytest
 ```
 
 ## Quick start
+
+Three things you can do in under 10 lines each.
+
+### 1. Get a complexity profile for any expression
+
+```python
+from eml_cost import analyze
+
+result = analyze("exp(exp(x)) + sin(x**2)")
+print(result.pfaffian_r, result.max_path_r, result.predicted_depth)
+# 5 5 7
+```
+
+### 2. Plug into SymPy's simplify as a cost function
+
+```python
+import sympy as sp
+from eml_cost import measure
+
+x = sp.Symbol("x", real=True)
+sp.simplify(sp.cos(x)**2 + sp.sin(x)**2, measure=measure)
+# 1
+```
+
+### 3. Detect Pfaffian-but-not-EML expressions (Bessel, Airy, Lambert W)
+
+```python
+import sympy as sp
+from eml_cost import is_pfaffian_not_eml
+
+is_pfaffian_not_eml(sp.besselj(0, sp.Symbol("x")))   # True
+is_pfaffian_not_eml(sp.exp(sp.Symbol("x")))          # False
+```
+
+## Result shape
 
 ```python
 from eml_cost import analyze
