@@ -33,6 +33,7 @@ For the full Pfaffian profile breakdown::
 from __future__ import annotations
 
 from .analyze import AnalyzeResult, Corrections, analyze, fingerprint, measure
+from .guards import CostLimitExceeded, costlimit
 from .core import (
     PFAFFIAN_NOT_EML_R,
     eml_depth,
@@ -42,13 +43,15 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = [
     "__version__",
     "analyze",
     "fingerprint",
     "measure",
+    "costlimit",
+    "CostLimitExceeded",
     "AnalyzeResult",
     "Corrections",
     "pfaffian_r",

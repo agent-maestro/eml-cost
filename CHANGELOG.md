@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.1.2] — 2026-04-25 — `@costlimit` decorator
+
+### Added
+- `@costlimit(predicted_depth=N, max_path_r=N, pfaffian_r=N)`:
+  decorator that enforces a cost ceiling on the return value of
+  the wrapped function. At least one axis must be configured;
+  multiple are AND'd. Non-SymPy returns pass through untouched.
+  When the limit is exceeded, raises `CostLimitExceeded` with
+  `.expression`, `.axis`, `.measured`, `.limit` attached.
+- `CostLimitExceeded` exception class (exported from package root).
+
+Use case: type-hint-style cost contracts on functions returning
+SymPy expressions. Useful in numerical pipelines, regression
+tests, and "this function must stay simple" enforcement.
+
+### Tests
+- 10 new cases in `tests/test_costlimit.py`. Full suite: 60 passing.
+
 ## [0.1.1] — 2026-04-25 — Pfaffian fingerprint
 
 ### Added
