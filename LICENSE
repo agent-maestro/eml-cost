@@ -1,0 +1,21 @@
+PROPRIETARY PRE-RELEASE LICENSE
+
+Copyright (c) 2026 Monogate Research. All rights reserved.
+
+This software is pre-release and is covered by U.S. patent applications
+filed 2026-04-25 (Monogate Research, applications #11 and #12). It is
+provided for internal and authorized-collaborator use only. Redistribution,
+public posting, forking to public repositories, publication on package
+indexes (including PyPI), or incorporation into open-source projects
+is prohibited without prior written permission from Monogate Research.
+
+Upon completion of patent prosecution, this software will be re-licensed
+under terms compatible with public distribution. Until that time, no
+license is granted under any patent rights.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
