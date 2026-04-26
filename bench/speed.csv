@@ -1,0 +1,6 @@
+corpus,n,analyze_med_ms,analyze_p95_ms,simplify_med_ms,simplify_p95_ms,count_ops_med_ms,count_ops_p95_ms,speedup_vs_simplify_med,ratio_vs_count_ops_med
+polynomial,200,0.099,0.247,20.598,33.411,0.155,0.484,209.01,1.57
+transcendental,200,0.076,44.676,12.234,29.663,0.039,0.124,161.4,0.52
+pfaffian-not-eml,21,0.032,0.045,0.761,5.894,0.021,0.036,23.92,0.66
+deep-nested,200,3.73,749.135,127.593,741.345,0.113,0.363,34.21,0.03
+transformer-component,8,0.071,0.168,18.282,252.269,0.08,0.228,256.22,1.13
