@@ -36,6 +36,12 @@ from .analyze import AnalyzeResult, Corrections, analyze, fingerprint, measure
 from .caching import FingerprintCacheInfo, cache_by_fingerprint, fingerprint_axes
 from .canonicalize import analyze_canonical, canonicalize
 from .estimate_time import PROXIES, TimeEstimate, estimate_time, model_metadata
+from .predict_precision_loss import (
+    FLOAT64_EPS,
+    PrecisionLossEstimate,
+    precision_loss_model_metadata,
+    predict_precision_loss,
+)
 from .guards import CostLimitExceeded, costlimit
 from .batch import analyze_batch, cache_hit_analysis
 from .profile import DEFAULT_WEIGHTS, PfaffianProfile
@@ -48,7 +54,7 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = [
     "__version__",
@@ -78,4 +84,8 @@ __all__ = [
     "model_metadata",
     "TimeEstimate",
     "PROXIES",
+    "predict_precision_loss",
+    "PrecisionLossEstimate",
+    "precision_loss_model_metadata",
+    "FLOAT64_EPS",
 ]

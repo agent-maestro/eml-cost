@@ -6,6 +6,86 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.7.0] — 2026-04-26 — `predict_precision_loss(expr)` runtime numerical predictor
+
+This release ships the regression model from research session E-193 and
+**completes the eml-cost prediction trilogy**: compile-time
+(`estimate_time`, 0.6.0), runtime numerical precision
+(`predict_precision_loss`, 0.7.0), and per-layer activation behavior
+(`eml_cost_torch.diagnose`, 0.5.0). **No breaking API changes**.
+
+### Added
+
+- **`predict_precision_loss(expr)`** — returns predicted float64
+  numerical error magnitude vs 50-digit mpmath ground truth, with a
+  95% prediction interval and a convenience `predicted_digits_lost`
+  field (decimal digits lost relative to perfect 16-digit float64).
+- **`PrecisionLossEstimate`** dataclass with fields:
+  `predicted_max_relerr`, `predicted_digits_lost`, `ci95`,
+  `log10_relerr`, `log10_std`, `features`, `cv_r2`.
+- **`precision_loss_model_metadata()`** — provenance for the shipped
+  model (n=379, source, features, response, session, and an
+  `honest_note` describing the modest CV R^2 and the deliberate
+  decision NOT to ship a form-recommender — see Honest framing below).
+- **`FLOAT64_EPS`** — exposed as a public constant
+  (`2.220446049250313e-16`); the smallest meaningful detectable
+  relerr in float64.
+
+### Empirical performance
+
+5-fold cross-validated R^2 on log10(mpmath_max_relerr), seed=42:
+
+| metric                | value         |
+|-----------------------|---------------|
+| CV R^2 mean           | +0.271        |
+| CV R^2 std            | 0.060         |
+| residual sigma (log10)| 0.772         |
+| Full-fit R^2          | +0.289        |
+| n (training)          | 379           |
+
+Coefficients (interpretation: log10 mpmath_max_relerr per unit of
+feature):
+
+    intercept       -15.4406
+    eml_depth       +0.3367   (~0.34 decimal digits per depth unit)
+    max_path_r      -0.1249
+    log_count_ops   +0.9443
+    log_tree_size   -1.3751
+
+Features: `eml_depth`, `max_path_r`, `log10(count_ops+1)`,
+`log10(tree_size+1)` — same pipeline as `estimate_time`.
+
+### Honest framing (also baked into `precision_loss_model_metadata`)
+
+This is a **modest** predictor by design. The underlying signal is
+real (E-193 partial r = +0.357 controlling for tree size, q = 1.6e-11)
+but moderate; the joint OLS R^2 captures ~27% of the log-variance.
+
+- **Use it for** rank-ordering candidate expressions, surfacing
+  high-risk subtrees in a SymPy linter, and quick sanity checks.
+- **Do not use it for** absolute precision claims — the CI95 spans
+  roughly factor 30 either way.
+- **Not a form recommender.** E-193 Phase 3 measured 30% best-pick
+  on 10 algebraically-equivalent rewrite tests, well below the 70%
+  product threshold. A form recommender was deliberately NOT shipped;
+  do not use this function to choose between
+  `1/(1+exp(-x))` and `tanh(x/2)/2 + 1/2`.
+
+### Floor handling
+
+50 of 381 corpus rows had measured `mpmath_max_relerr = 0.0`
+(float64 matched mpmath bit-for-bit at all 100 sampled points). These
+are floored to `FLOAT64_EPS` (~2.22e-16) — the smallest reportable
+relerr in float64 — for the regression. Without this floor, log10
+sends those rows to `-inf` and the OLS collapses.
+
+### Source
+
+`monogate-research/exploration/E193_numerical_stability/corpus_with_stability.csv`
+(403 rows, 379 retained after removing 12 no-mpmath + 12 nan-relerr rows).
+
+Fit script: `monogate-research/exploration/E-193-precision-loss/fit_precision_loss.py`.
+
 ## [0.6.0] — 2026-04-26 — `estimate_time(expr)` SymPy compile-time predictor
 
 This release ships the regression model from research session E-191:
