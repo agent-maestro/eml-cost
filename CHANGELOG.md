@@ -6,6 +6,57 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.7.1] — 2026-04-26 — `eml-cost` CLI (UX layer for the trilogy)
+
+This release ships an installable `eml-cost` console command that makes
+the existing 0.7.0 prediction trilogy usable from the shell and from a
+pre-commit hook. **No model coefficients changed**; this is purely a
+UX layer.
+
+### Added
+
+- **`eml-cost report EXPR [EXPR ...]`** — pretty-prints
+  `analyze` + `estimate_time` + `predict_precision_loss` for each
+  expression. Add `--json` for machine-readable output.
+- **`eml-cost check EXPR [EXPR ...]`** — same as `report` but exits
+  non-zero if any expression exceeds a budget. Use
+  `--max-simplify-ms N` to gate compile-time and `--max-digits-lost N`
+  to gate runtime numerical loss.
+- **`eml-cost report --file PATH` / `eml-cost check --file PATH`** —
+  read one expression per line from PATH (use `-` for stdin). Lines
+  starting with `#` and blank lines are skipped, so the file can hold
+  comments.
+- **`eml-cost version`** — prints version + the trilogy summary.
+- **`[project.scripts] eml-cost = "eml_cost.cli:_entrypoint"`** in
+  `pyproject.toml`.
+
+### Pre-commit recipe
+
+```yaml
+- repo: local
+  hooks:
+    - id: eml-cost
+      name: eml-cost numerical / compile-cost gate
+      entry: eml-cost check --file
+      language: system
+      files: ^expressions\.txt$
+      args: [--max-simplify-ms, "200", --max-digits-lost, "3"]
+```
+
+### Exit codes
+
+| code | meaning |
+|------|---------|
+| 0    | all checks passed |
+| 1    | at least one threshold violation (check only) |
+| 2    | at least one expression failed to parse |
+| 64   | usage error (no expressions given) |
+
+### Tests
+
+16 new CLI tests (`test_cli.py`) — all green; full suite 194/194.
+mypy --strict clean (11 source files).
+
 ## [0.7.0] — 2026-04-26 — `predict_precision_loss(expr)` runtime numerical predictor
 
 This release ships the regression model from research session E-193 and
