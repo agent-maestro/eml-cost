@@ -6,6 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.3.0] — 2026-04-25 — `PFAFFIAN_NOT_EML_R` registry expansion
+
+### Added — 20 new non-elementary primitives recognised
+
+S/R-134 deep research revealed that 24 named non-elementary SymPy
+functions were silently treated as depth-0 atoms by the cost
+detector — `is_pfaffian_not_eml` returned False for `erf`, `gamma`,
+`polylog`, `zeta`, `elliptic_k`, `Ei`, etc., despite these being
+genuinely non-elementary. This release adds 20 new entries to
+`PFAFFIAN_NOT_EML_R` covering 6 special-function families:
+
+| Family | Entries | Chain orders |
+|---|---|---|
+| erf-family | erf, erfc, erfi, fresnels, fresnelc | 2-3 |
+| Gamma family | gamma, loggamma, polygamma, beta | 2-3 |
+| Exp / cos integrals | Ei, li, Si, Ci, Shi, Chi | 2-3 |
+| Polylog / zeta | polylog, zeta | 3-4 |
+| Elliptic | elliptic_k, elliptic_e, elliptic_f | 3-4 |
+
+(Note: `digamma` reduces to `polygamma(0, x)` in SymPy, so a
+single `polygamma` entry covers digamma + trigamma + general
+polygamma_n.)
+
+Each chain order is a conservative estimate justified inline at
+`core.py:37-90` against standard analytic facts (Frobenius series,
+defining ODEs, Pfaffian chain elements). The substrate's
+`analyze()` and `fingerprint()` now report meaningful depths for
+these functions instead of treating them as constants.
+
+### Behaviour change
+
+  - **`is_pfaffian_not_eml(sp.erf(x))`** — was `False`, now `True`.
+  - **`fingerprint(sp.erf(x))`** — axes change from `p0-d0-w0-c0`
+    to `p2-d1-w2-c0` (or similar; depends on the chain order).
+  - **`predicted_depth(sp.gamma(x))`** — was `0`, now `2-3`.
+  - Downstream `eml-witness 0.2.1+` and `monogate 2.4.3+` continue
+    to return `verified_in_lean=False` for these functions (their
+    strict allow-list check is independent of this registry; the
+    two gates are now mutually reinforcing rather than redundant).
+
+### Tests
+
+- 6 new tests in `tests/test_extended_registry.py` covering one
+  representative from each new family + a regression test that
+  every new entry is independently `is_pfaffian_not_eml=True`.
+
+### Migration notes
+
+If any downstream code was using `is_pfaffian_not_eml=False` as a
+proxy for "this is elementary", it now needs to handle the
+correct case (the function IS Pfaffian-not-EML). Strict
+elementary-class detection remains in `monogate.witness` /
+`eml-witness` allow-list.
+
 ## [0.2.0] — 2026-04-25 — `@cache_by_fingerprint` (cost-class memoization)
 
 ### Added

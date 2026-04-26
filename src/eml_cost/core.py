@@ -35,18 +35,54 @@ __all__ = [
 # Pfaffian-but-not-EML primitives mapped to chain order under standard
 # defining ODEs (Khovanskii convention).
 PFAFFIAN_NOT_EML_R: dict[str, int] = {
+    # --- Bessel family ---
     "besselj": 3,    # {1/x, J0, J1}
-    "bessely": 5,    # {1/x, ln(x), J0, Y0, Y1}
+    "bessely": 5,    # {1/x, ln(x), J0, Y0, Y1} — log-singular at origin
     "besseli": 3,
     "besselk": 3,
     "hankel1": 3,
     "hankel2": 3,
+    # --- Airy family ---
     "airyai": 3,
     "airybi": 3,
     "airyaiprime": 3,
     "airybiprime": 3,
-    "hyper": 3,
-    "LambertW": 2,
+    # --- Hypergeometric / Lambert W ---
+    "hyper": 3,      # 1F1 / 2F1 — 2nd-order ODE
+    "LambertW": 2,   # W(x), 1/(1+W) for the derivative
+    # ---------------------------------------------------------------
+    # Added in eml-cost 0.3.0 (S/R-134 follow-up). The substrate
+    # previously treated these as depth-0 atoms because they weren't
+    # in this registry; the strict EML-class check in eml-witness
+    # 0.2.1 / monogate 2.4.3 caught the resulting verified_in_lean
+    # correctness bug. Adding them here so the cost detector also
+    # reports meaningful chain orders.
+    # ---------------------------------------------------------------
+    # erf-family — derived from integrals of exp(-t**2) etc.
+    "erf": 2,        # {exp(-x**2), erf(x)}
+    "erfc": 2,       # erfc = 1 - erf, same chain
+    "erfi": 2,       # erfi(x) = -i*erf(ix), same chain
+    "fresnels": 3,   # Fresnel S — Pfaffian chain {sin(x**2), cos(x**2), S}
+    "fresnelc": 3,   # Fresnel C — partner of S
+    # Gamma family — derivative chain Gamma -> psi -> psi' -> ...
+    "gamma": 2,      # {Gamma(x), psi(x)}; Gamma' = Gamma * psi
+    "loggamma": 2,   # log Gamma has derivative psi — same chain
+    "polygamma": 3,  # psi_n includes digamma (n=0) + trigamma (n=1) + ...
+    "beta": 3,       # B(x,y) = Gamma(x)*Gamma(y)/Gamma(x+y) — composition
+    # Exponential / cosine integrals — extend exp/log Pfaffian chain
+    "Ei": 3,         # integral of exp(t)/t; chain {exp(x), 1/x, Ei}
+    "li": 3,         # li(x) = Ei(ln x); same chain order
+    "Si": 3,         # integral of sin(t)/t; oscillation-augmented
+    "Ci": 3,         # integral of cos(t)/t; oscillation-augmented
+    "Shi": 2,        # hyperbolic sine integral
+    "Chi": 2,        # hyperbolic cosine integral
+    # Polylog / zeta — iterated exp/log integrals
+    "polylog": 3,    # Li_2 (dilog); Li_k chain order ~ k+1 for k >= 2
+    "zeta": 4,       # Riemann zeta(s) — non-trivial chain
+    # Elliptic integrals — non-elementary by Liouville
+    "elliptic_k": 3, # K(m) — chain {K, E, 1/m}
+    "elliptic_e": 3, # E(m) — partner of K
+    "elliptic_f": 4, # F(phi|m) — incomplete, depends on both args
 }
 
 
