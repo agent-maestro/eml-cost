@@ -35,6 +35,7 @@ from __future__ import annotations
 from .analyze import AnalyzeResult, Corrections, analyze, fingerprint, measure
 from .caching import FingerprintCacheInfo, cache_by_fingerprint, fingerprint_axes
 from .canonicalize import analyze_canonical, canonicalize
+from .estimate_time import PROXIES, TimeEstimate, estimate_time, model_metadata
 from .guards import CostLimitExceeded, costlimit
 from .batch import analyze_batch, cache_hit_analysis
 from .profile import DEFAULT_WEIGHTS, PfaffianProfile
@@ -47,7 +48,7 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.5.1"
+__version__ = "0.6.0"
 
 __all__ = [
     "__version__",
@@ -73,4 +74,8 @@ __all__ = [
     "DEFAULT_WEIGHTS",
     "analyze_batch",
     "cache_hit_analysis",
+    "estimate_time",
+    "model_metadata",
+    "TimeEstimate",
+    "PROXIES",
 ]

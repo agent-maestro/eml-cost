@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.6.0] — 2026-04-26 — `estimate_time(expr)` SymPy compile-time predictor
+
+This release ships the regression model from research session E-191:
+a SymPy compile-time linter that predicts wall-time of canonical
+compiler-style passes (`simplify`, `factor`, `cse`, `lambdify`) from
+the expression's Pfaffian profile. Empirical basis: 202 expressions
+from cross-domain-3 R v2 (2026-04-26). **No breaking API changes**.
+
+### Added
+
+- **`estimate_time(expr, proxy="all")`** — returns predicted wall-time
+  in milliseconds for one or all four compile-time proxies. Each
+  prediction includes a 95% confidence interval (asymmetric in linear
+  space, symmetric in log-space) derived from the residual std of the fit.
+- **`TimeEstimate`** dataclass with fields: `proxy`, `predicted_ms`,
+  `ci95`, `log10_ms`, `log10_std`, `features`, `cv_r2`.
+- **`model_metadata()`** — provenance for the shipped regression model
+  (n=202, source, features, response, session).
+- **`PROXIES`** tuple constant (`"simplify"`, `"factor"`, `"cse"`,
+  `"lambdify"`).
+
+### Empirical performance
+
+5-fold cross-validated R^2 on log10(milliseconds):
+
+| proxy    | CV R^2 | residual sigma (log10 ms) | typical ratio |
+|----------|--------|---------------------------|---------------|
+| simplify | 0.68   | 0.45                      | ~2.8x         |
+| factor   | 0.76   | 0.16                      | ~1.4x         |
+| cse      | 0.83   | 0.14                      | ~1.4x         |
+| lambdify | 0.84   | 0.08                      | ~1.2x         |
+
+Features: `eml_depth`, `max_path_r`, `log10(count_ops+1)`,
+`log10(tree_size+1)`. Fit method: OLS on the full 202-row dataset
+after CV validation.
+
+### Caveats (documented in module docstring)
+
+- Trained on Python 3.x + sympy >= 1.12 on a single CPU class.
+  Absolute times shift with hardware/version; relative ordering is robust.
+- Tail behavior beyond ~5s simplify time is extrapolation.
+- `solve`, `integrate`, `series` are NOT modeled.
+
 ## [0.5.1] — 2026-04-26 — `analyze_batch` two-level cache (28x speedup on high-duplicate workloads)
 
 ### Changed
@@ -27,9 +70,10 @@ the public 1.0.0 release ships.
 
 ## [0.5.0] — 2026-04-26 — `PfaffianProfile` + distance metric + `analyze_batch`
 
-This release ships the four E-18X overnight session bundle items
-(except sessions cleanly numbered E-182 through E-185 in research notes).
-Built on top of 0.4.0's `canonicalize()`. **No breaking API changes** —
+This release ships the work from research sessions E-183 (distance
+metric), E-184 (analyze_batch + caching), and E-185 (demo notebook +
+50-expression corpus). E-182 (`canonicalize()`) shipped earlier today
+in 0.4.0 and is not duplicated here. **No breaking API changes** —
 `analyze()` and `AnalyzeResult` still work exactly as before.
 
 ### Added
