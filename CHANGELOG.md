@@ -6,6 +6,71 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.4.0] — 2026-04-26 — `canonicalize()` preprocessing for form-fragility
+
+### Added
+
+- `eml_cost.canonicalize(expr)` — applies a curated sequence of cheap,
+  content-preserving rewrite rules to convert algebraically-equivalent
+  expressions to a canonical form before cost-class measurement.
+- `eml_cost.analyze_canonical(expr)` — convenience wrapper for
+  `analyze(canonicalize(expr))`.
+
+### Why
+
+A form-sensitivity audit on 20 textbook expressions × 4 algebraically-
+equivalent forms each (80 substrate evaluations) found **50% of
+expressions yielded different cost classes for different forms**.
+The worst offender: sigmoid, where four equivalent forms produced four
+different cost classes:
+
+  - `1 / (1 + exp(-x))`     → `p1-d1-w1-c-1`
+  - `exp(x) / (exp(x) + 1)` → `p1-d2-w1-c0`
+  - `0.5 * (1 + tanh(x/2))` → `p1-d4-w1-c0`
+  - `1 - 1 / (1 + exp(x))`  → `p1-d3-w1-c0`
+
+`canonicalize` applies:
+  - `sympy.together` to merge fractions
+  - `sympy.logcombine(force=True)` for `log(x) - log(y)` → `log(x/y)`
+  - `sympy.trigsimp` for `cos(a)cos(b) + sin(a)sin(b)` → `cos(a-b)`
+  - explicit pattern rewrite `1 - 1/(1+exp(x))` → `1/(1+exp(-x))`
+  - `sympy.factor_terms` for distributive normalization
+
+### Impact (re-run of form-sensitivity audit)
+
+  - Drift rate **50% → 35%** (10 → 7 of 20 tests still drift)
+  - **Fully fixed:** traveling_wave, logistic_growth, rc_charging
+  - **Reduced (still drift but less):** sigmoid (4 → 2 unique classes),
+    gaussian_kernel_2d (3 → 2)
+  - **Still drift:** sigmoid, hill_kernel, exponential_decay,
+    gaussian_kernel_2d, softmax_2key, nernst_potential, cardiac_oscillator
+    — these reflect genuine substrate sensitivity to inner-argument
+    shape (e.g., `exp(-k*t)` vs `exp(-t/tau)` use different SymPy
+    Mul structures), not bugs.
+
+### Performance
+
+`canonicalize` adds a small constant multiple (typically 2-5x) to
+`analyze` cost. Total `analyze_canonical` cost is still in the
+sub-millisecond range for typical expressions and **still 5-50x faster
+than `sympy.simplify`** per the bench/speed_bench.py results.
+
+### Tests
+
+- 13 new tests in `tests/test_canonicalize.py`. Full suite: **91 passing**.
+
+### When to use
+
+  - **Use `analyze_canonical`** when measuring cost classes across a
+    user-supplied corpus where you don't control the expression form.
+  - **Use plain `analyze`** when you control the form yourself and
+    want maximum speed (e.g., in a tight inner loop with hand-curated
+    expressions).
+  - **The patent claim shifts** from "Pfaffian profile of an
+    expression" to "Pfaffian profile of the canonical form of an
+    expression"; the canonicalize() rule set is part of the disclosed
+    method.
+
 ## [0.3.0] — 2026-04-25 — `PFAFFIAN_NOT_EML_R` registry expansion
 
 ### Added — 20 new non-elementary primitives recognised

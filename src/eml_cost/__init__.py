@@ -34,6 +34,7 @@ from __future__ import annotations
 
 from .analyze import AnalyzeResult, Corrections, analyze, fingerprint, measure
 from .caching import FingerprintCacheInfo, cache_by_fingerprint, fingerprint_axes
+from .canonicalize import analyze_canonical, canonicalize
 from .guards import CostLimitExceeded, costlimit
 from .core import (
     PFAFFIAN_NOT_EML_R,
@@ -44,11 +45,13 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "__version__",
     "analyze",
+    "analyze_canonical",
+    "canonicalize",
     "fingerprint",
     "fingerprint_axes",
     "measure",
