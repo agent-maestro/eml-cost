@@ -25,9 +25,12 @@ the per-expression speed advantage.
 """
 from __future__ import annotations
 
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import sympy as sp
+
+if TYPE_CHECKING:
+    from .analyze import AnalyzeResult
 
 
 __all__ = ["canonicalize", "analyze_canonical"]
@@ -173,7 +176,7 @@ def canonicalize(expr: Union[str, sp.Basic]) -> sp.Basic:
     return e
 
 
-def analyze_canonical(expr: Union[str, sp.Basic]):
+def analyze_canonical(expr: Union[str, sp.Basic]) -> "AnalyzeResult":
     """Convenience: canonicalize first, then analyze.
 
     Equivalent to ``analyze(canonicalize(expr))`` but a single call.

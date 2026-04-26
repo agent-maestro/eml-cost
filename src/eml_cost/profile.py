@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass, field
-from typing import Optional
+from typing import Any, Optional, Union
 
 import sympy as sp
 
@@ -73,7 +73,7 @@ class PfaffianProfile:
     width: int
     cost_class: str
     oscillatory: bool
-    corrections: dict
+    corrections: dict[str, Any]
     expression: str
     canonical_form: str
     is_pfaffian_not_eml: bool
@@ -86,7 +86,7 @@ class PfaffianProfile:
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_expression(cls, expr, *, do_canonicalize: bool = True) -> "PfaffianProfile":
+    def from_expression(cls, expr: Union[sp.Basic, str], *, do_canonicalize: bool = True) -> "PfaffianProfile":
         """Build a profile from a sympy expression (or string).
 
         Parameters
@@ -139,7 +139,7 @@ class PfaffianProfile:
     # ------------------------------------------------------------------
 
     def distance(self, other: "PfaffianProfile",
-                 weights: Optional[dict] = None) -> float:
+                 weights: Optional[dict[str, float]] = None) -> float:
         """Weighted Euclidean distance in (r, d, w, c) coordinate space.
 
         This IS a metric (proven in tests/test_profile_metric.py):
@@ -162,7 +162,7 @@ class PfaffianProfile:
             + w["c"] * d_c * d_c
         )
 
-    def compare(self, other: "PfaffianProfile") -> dict:
+    def compare(self, other: "PfaffianProfile") -> dict[str, Any]:
         """Per-axis delta + total distance."""
         return {
             "delta_r": self.r - other.r,
@@ -181,11 +181,11 @@ class PfaffianProfile:
     # Serialization
     # ------------------------------------------------------------------
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """JSON-friendly dict representation."""
         return asdict(self)
 
-    def to_row(self) -> list:
+    def to_row(self) -> list[Any]:
         """Flat list for CSV output."""
         return [
             self.expression,
@@ -236,7 +236,7 @@ def _estimate_width(expr: sp.Basic) -> int:
         if not chain_children:
             return max((_estimate_width(c) for c in children), default=0)
         # Group by overlapping free vars
-        groups = []
+        groups: list[frozenset[sp.Basic]] = []
         for child in chain_children:
             vars_ = frozenset(child.free_symbols)
             merged = []
@@ -260,7 +260,7 @@ def _estimate_width(expr: sp.Basic) -> int:
     return 0
 
 
-def _has_chain_element(expr) -> bool:
+def _has_chain_element(expr: Any) -> bool:
     """True if expr contains exp/log/sin/cos/tan/sqrt/etc."""
     if not isinstance(expr, sp.Basic):
         return False

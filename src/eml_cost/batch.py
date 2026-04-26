@@ -16,7 +16,7 @@ Public API:
 """
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
 import sympy as sp
 
@@ -38,7 +38,7 @@ except ImportError:
     _HAVE_JOBLIB = False
 
 
-def _profile_one(expr_or_str, do_canonicalize: bool) -> PfaffianProfile:
+def _profile_one(expr_or_str: Any, do_canonicalize: bool) -> PfaffianProfile:
     """Worker — must be picklable, hence module-level."""
     try:
         return PfaffianProfile.from_expression(expr_or_str,
@@ -58,7 +58,7 @@ def _profile_one(expr_or_str, do_canonicalize: bool) -> PfaffianProfile:
 
 
 def analyze_batch(
-    expressions: Iterable,
+    expressions: Iterable[Any],
     *,
     canonicalize: bool = True,
     n_jobs: int = 1,
@@ -127,11 +127,11 @@ def analyze_batch(
     # ------------------------------------------------------------------
     if n_jobs == 1:
         from dataclasses import replace
-        raw_cache: dict[str, PfaffianProfile] = {} if cache else None
-        canon_cache: dict[str, PfaffianProfile] = {} if cache else None
-        results = []
+        raw_cache: dict[str, PfaffianProfile] = {}
+        canon_cache: dict[str, PfaffianProfile] = {}
+        results: list[PfaffianProfile] = []
         for e in iterator:
-            if raw_cache is not None:
+            if cache:
                 # Level 1: exact-string fast path
                 raw_key = str(e)
                 if raw_key in raw_cache:
@@ -182,7 +182,7 @@ def analyze_batch(
     return list(results)
 
 
-def cache_hit_analysis(expressions: Iterable, canonicalize: bool = True) -> dict:
+def cache_hit_analysis(expressions: Iterable[Any], canonicalize: bool = True) -> dict[str, Any]:
     """Analyze the theoretical cache hit rate of a workload.
 
     Returns the unique-canonical-form count and theoretical hit rate.
