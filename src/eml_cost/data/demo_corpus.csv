@@ -1,0 +1,51 @@
+name,domain,sympy_expr,source_citation
+constant,polynomial,"1",Polynomial baseline
+linear,polynomial,"x + 1",Polynomial baseline
+quadratic,polynomial,"x**2 - 3*x + 2",Polynomial baseline
+cubic,polynomial,"x**3 - 6*x**2 + 11*x - 6",Polynomial baseline
+quartic,polynomial,"x**4 - 10*x**2 + 9",Polynomial baseline
+exp_x,exp_log,"exp(x)",Elementary calculus
+exp_neg_x,exp_log,"exp(-x)",Elementary calculus
+log_x,exp_log,"log(x)",Elementary calculus
+log_1px,exp_log,"log(1 + x)",Series expansion textbook
+exp_quadratic,exp_log,"exp(-x**2)",Gaussian unnormalized (Bishop PRML eq 1.46)
+sin_x,trig,"sin(x)",Trig fundamental
+cos_x,trig,"cos(x)",Trig fundamental
+tan_x,trig,"tan(x)",Trig fundamental
+sin_squared,trig,"sin(x)**2",Pythagorean identity
+sin_x_over_x,trig,"sin(x)/x",Sinc function (Bracewell Fourier 2000)
+besselj0,pfaffian_not_eml,"besselj(0, x)",Bessel function of the first kind
+airyai,pfaffian_not_eml,"airyai(x)",Airy function (Abramowitz & Stegun)
+erf_x,pfaffian_not_eml,"erf(x)",Error function
+lambertw,pfaffian_not_eml,"LambertW(x)","Corless et al. 1996, On the Lambert W function"
+hyper_2f1,pfaffian_not_eml,"hyper((1, 1), (2,), -x)",Gauss hypergeometric 2F1
+relu,ml_activation,"Max(0, x)",Nair & Hinton 2010 ReLU
+sigmoid,ml_activation,"1/(1 + exp(-x))",Logistic function
+tanh_act,ml_activation,"tanh(x)",Standard activation
+gelu_approx,ml_activation,"x*(1 + erf(x/sqrt(2)))/2",Hendrycks & Gimpel 2016 GELU
+softplus,ml_activation,"log(1 + exp(x))",Smooth ReLU
+planck_radiance,physics,"2*h*c**2/lam**5/(exp(h*c/(lam*k_B*T)) - 1)",Planck 1901 black-body radiance
+boltzmann,physics,"exp(-E/(k_B*T))",Boltzmann distribution
+schwarzschild,physics,"2*G*M/c**2",Schwarzschild radius (Schwarzschild 1916)
+maxwell_speed,physics,"(m/(2*pi*k_B*T))**(3/2) * 4*pi*v**2 * exp(-m*v**2/(2*k_B*T))",Maxwell-Boltzmann speed distribution
+stefan_boltzmann,physics,"sigma_SB * T**4",Stefan-Boltzmann law
+logistic_growth,biology,"K/(1 + (K - N0)/N0 * exp(-r*t))","Verhulst 1838, logistic population"
+michaelis_menten,biology,"V_max * Substrate /(K_M + Substrate)",Michaelis-Menten 1913 enzyme kinetics
+hill_kernel,biology,"x**n /(K**n + x**n)",Hill 1910 cooperative binding
+exponential_decay,biology,"N0 * exp(-k*t)",Radioactive / pharmacological decay
+nernst,biology,"(R*T/(z*F)) * log(C_out/C_in)",Nernst potential (Nernst 1888)
+rc_charging,engineering,"V0 * (1 - exp(-t/(R*C)))",RC circuit charging (textbook EE)
+arrhenius,engineering,"A * exp(-E_a/(R*T))",Arrhenius 1889 reaction rate
+snell_ratio,engineering,"n1/n2",Snell's law of refraction
+beam_deflection,engineering,"P*L**3/(48*E*I)",Euler-Bernoulli beam (3-point load)
+heat_conduction,engineering,"-k*dT_dx",Fourier's law (Fourier 1822)
+random_p0,random_null,"z1 + z2*z3",N=5000 random null sample (E-183 bench)
+random_p1,random_null,"exp(z4)",N=5000 random null sample
+random_p2,random_null,"sin(z5)*cos(z5)",N=5000 random null sample
+random_p3,random_null,"sqrt(z6**2 + 1)/z7",N=5000 random null sample
+random_p4,random_null,"log(1 + z8**3)",N=5000 random null sample
+softmax_2key,ml_activation,"exp(x)/(exp(x) + exp(y))","Bridle 1990, softmax for classification"
+gaussian_2d,physics,"exp(-(x**2 + y**2)/(2*sigma**2))/(2*pi*sigma**2)",2D Gaussian PDF
+traveling_wave,physics,"A * cos(k*x - omega*t)",Plane wave (general physics)
+layernorm,ml_activation,"(x - mu)/sqrt(sigma**2 + epsilon)",Ba et al. 2016 layer normalization
+cardiac_oscillator,biology,"A * cos(2*pi*t/T)",Cardiac sinus rhythm idealization

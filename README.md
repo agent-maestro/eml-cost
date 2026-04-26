@@ -55,6 +55,64 @@ is_pfaffian_not_eml(sp.besselj(0, sp.Symbol("x")))   # True
 is_pfaffian_not_eml(sp.exp(sp.Symbol("x")))          # False
 ```
 
+### 4. Canonicalize before profiling (eliminate form-fragility)
+
+50% of textbook expressions yield different cost classes when written in
+algebraically equivalent forms. `canonicalize()` is a curated, content-
+preserving rewrite-rule sequence that drops drift to ~35% in our audit.
+
+```python
+import sympy as sp
+from eml_cost import PfaffianProfile
+
+x = sp.Symbol("x")
+forms = [
+    1 / (1 + sp.exp(-x)),
+    sp.exp(x) / (sp.exp(x) + 1),
+    1 - 1 / (1 + sp.exp(x)),
+]
+for f in forms:
+    p = PfaffianProfile.from_expression(f)  # canonicalize=True is default
+    print(f"{f}  ->  {p.cost_class}")
+# All three collapse to the same cost class.
+```
+
+### 5. Compare two expressions with a real distance metric
+
+```python
+from eml_cost import PfaffianProfile
+
+a = PfaffianProfile.from_expression("exp(x)")
+b = PfaffianProfile.from_expression("sin(x)")
+a.distance(b)        # weighted Euclidean in (r, d, w, c) space
+a.compare(b)         # per-axis deltas + same_class flag
+a.is_elementary()    # True (not Pfaffian-not-EML)
+```
+
+The metric satisfies identity, symmetry, and the triangle inequality
+(verified in `tests/test_profile_metric.py`). Default weights:
+`r=4, d=1, w=2, c=1` — chain order dominates.
+
+### 6. Run on the bundled 50-expression cross-domain corpus
+
+```python
+import csv
+from importlib.resources import files
+from eml_cost import PfaffianProfile
+
+corpus_path = files("eml_cost").joinpath("data/demo_corpus.csv")
+with open(corpus_path) as f:
+    rows = list(csv.DictReader(f))
+profiles = [PfaffianProfile.from_expression(r["sympy_expr"]) for r in rows]
+
+# 50 expressions, 9 domains (polynomial, exp_log, trig, pfaffian_not_eml,
+# ml_activation, physics, biology, engineering, random_null), all with
+# citations.
+```
+
+For an interactive walk-through with plots, see
+[`notebooks/quickstart.ipynb`](notebooks/quickstart.ipynb).
+
 ## Result shape
 
 ```python

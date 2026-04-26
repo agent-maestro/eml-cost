@@ -6,6 +6,91 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.5.1] — 2026-04-26 — `analyze_batch` two-level cache (28x speedup on high-duplicate workloads)
+
+### Changed
+
+- **`analyze_batch(cache=True)` two-level cache.** The 0.5.0 cache
+  ran `canonicalize()` on every input (even cache hits) to compute
+  the cache key — producing the documented 0.58x slowdown on
+  low-duplicate workloads. 0.5.1 adds a Level-1 raw-string fast path:
+    - Level 1 (`raw_cache`): keyed by `str(input)`. Exact-string
+      repeats are O(1) — zero canonicalize cost.
+    - Level 2 (`canon_cache`): keyed by canonical-form string.
+      Catches algebraically-equivalent forms.
+- Empirical impact:
+    - Low-duplicate (403 bio corpus): 0.58x → **0.94x** (near break-even).
+    - High-duplicate (96% dup, deep transcendentals, n=200): 1.01x →
+      **28.25x**.
+- No API changes. Cache results identical to `cache=False` (verified by
+  test).
+
+## [0.5.0] — 2026-04-26 — `PfaffianProfile` + distance metric + `analyze_batch`
+
+This release ships the four E-18X overnight session bundle items
+(except sessions cleanly numbered E-182 through E-185 in research notes).
+Built on top of 0.4.0's `canonicalize()`. **No breaking API changes** —
+`analyze()` and `AnalyzeResult` still work exactly as before.
+
+### Added
+
+- **`PfaffianProfile`** (in `eml_cost.profile`) — rich frozen dataclass
+  with `r`, `degree`, `width`, `cost_class`, `oscillatory`, `corrections`,
+  `expression`, `canonical_form`, `is_pfaffian_not_eml`. Construct via
+  `PfaffianProfile.from_expression(expr, do_canonicalize=True)` or wrap
+  an existing `AnalyzeResult` via `from_analysis()`.
+- **`PfaffianProfile.distance(other)`** — weighted Euclidean metric in
+  (r, d, w, c) coordinate space. Default weights `r=4, d=1, w=2, c=1`
+  (chain order dominates; configurable per call). Verified to satisfy
+  identity, symmetry, and the triangle inequality across 13K+ test
+  triples (`tests/test_profile_metric.py`).
+- **`PfaffianProfile.compare(other)`** — per-axis deltas + `same_class`
+  flag.
+- **`PfaffianProfile.is_elementary()`** — convenience predicate.
+- **`PfaffianProfile.to_dict()` / `to_row()` / `csv_header()`** — JSON +
+  CSV serialization helpers.
+- **`analyze_batch(expressions, n_jobs=1, cache=True, progress=None,
+  canonicalize=True)`** — batch profiler with `joblib`-based
+  multiprocessing, canonical-form-keyed caching, and `tqdm` progress
+  bars. SymPy is not thread-safe, so we use processes (`backend="loky"`).
+  Failed expressions get an `ERROR` sentinel profile rather than
+  crashing the batch. Order is preserved.
+- **`cache_hit_analysis(expressions)`** — theoretical cache hit rate
+  for a workload (counts unique canonical forms).
+- **`eml_cost/data/demo_corpus.csv`** — bundled 50-expression cross-
+  domain corpus across 9 domains (polynomial, exp/log, trig,
+  Pfaffian-not-EML, ML activations, physics, biology, engineering,
+  random null) with citations on every row. Loadable via
+  `importlib.resources.files("eml_cost").joinpath("data/demo_corpus.csv")`.
+- **`notebooks/quickstart.ipynb`** — 8-cell guided tour. Tested
+  end-to-end via `notebooks/test_quickstart.py`. All 50 corpus
+  expressions profile successfully.
+
+### Empirical basis
+
+- Triangle-inequality verification: 13,824 test triples across 24
+  representative expressions. Zero violations (`tests/test_profile_metric.py`).
+- 403-expression cross-domain bio corpus distance matrix +
+  hierarchical clustering shipped as `bench/distance/` reproducer
+  (heatmap PNG, dendrogram PNG, full numeric matrix).
+- 10,100-expression regression of canonicalize() on the cumulative
+  random + null corpus: **84.76% same cost class with vs without
+  canonicalize** (n=15,000), **15.24% reclassified** under canonical
+  form. Most reclassifications are documented in `bench/regression/`.
+
+### Tests
+
+- 12 new in `tests/test_batch.py` (analyze_batch behavior + cache
+  hit analysis).
+- 17 new in `tests/test_profile_metric.py` (PfaffianProfile API +
+  metric axioms).
+- 91 prior + 29 new = **120 tests passing.**
+
+### Optional dependencies
+
+- `joblib` — required for `n_jobs > 1`. Falls back to serial if absent.
+- `tqdm` — progress bar. Falls back to no-op if absent.
+
 ## [0.4.0] — 2026-04-26 — `canonicalize()` preprocessing for form-fragility
 
 ### Added
