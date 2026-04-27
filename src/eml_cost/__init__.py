@@ -50,6 +50,7 @@ from .recommend_form import (
 )
 from .dynamics import DynamicsProfile, analyze_dynamics
 from .siblings import Sibling, corpus_domains, corpus_size, find_siblings
+from .lint import Finding, lint_file, lint_source
 from .guards import CostLimitExceeded, costlimit
 from .batch import analyze_batch, cache_hit_analysis
 from .profile import DEFAULT_WEIGHTS, PfaffianProfile
@@ -62,7 +63,7 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.11.0"
+__version__ = "0.12.0"
 
 __all__ = [
     "__version__",
@@ -106,4 +107,7 @@ __all__ = [
     "Sibling",
     "corpus_size",
     "corpus_domains",
+    "lint_file",
+    "lint_source",
+    "Finding",
 ]

@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.12.0] — 2026-04-27 — `eml-cost lint` pre-commit linter
+
+Surfaces ``estimate_time`` at the source-file level. Scans Python
+files for SymPy ``simplify``/``factor``/``expand``/``cse``/
+``lambdify`` calls, infers the expression argument from string
+literals or ``sp.sympify("...")`` calls, and predicts wall-time
+before the call would actually run.
+
+### Added
+
+  - ``lint_file(path) -> list[Finding]`` — file-based linter API.
+  - ``lint_source(text, filename=...) -> list[Finding]`` — string-
+    based variant for tooling integration.
+  - ``Finding`` dataclass — file, line, col, function, proxy,
+    expression_repr, predicted_seconds, severity (info/warn/error),
+    message.
+  - ``eml-cost lint <paths...>`` CLI subcommand with
+    ``--max-seconds`` (pre-commit budget) and ``--severity``
+    (filter level) flags.
+  - 17 new tests covering pattern detection (sp.simplify,
+    sp.factor, sp.expand, bare simplify, attribute call, .subs
+    not flagged), severity classification, source-only
+    resolution (no runtime context), syntax-error handling,
+    file-interface, line-numbers, and missing-file diagnostic.
+
+### Honest framing
+
+  - The linter ONLY resolves expressions it can infer at parse
+    time: string literals (``simplify("exp(x)")``) and
+    ``sympify("...")`` wrappers. Bare variable names and method
+    chains are SKIPPED — no whole-program flow analysis.
+  - The estimator was fit on E-191 / E-192 corpora at 5-fold
+    CV R² 0.68–0.84. Predicted times are an ORDERING signal, not
+    an absolute timeout.
+  - SymPy's auto-Symbol behaviour is mitigated: ``sympify("e")``
+    returning Euler's E does not cause false positives because
+    bare names are not resolved.
+  - Source: ``estimate_time`` model in ``estimate_time.py``;
+    corpus in ``monogate-research/exploration/E191_estimate_time``.
+
 ## [0.11.0] — 2026-04-27 — `find_siblings()` cross-domain structural search
 
 The 578-row cross-domain corpus is now bundled inside the package.

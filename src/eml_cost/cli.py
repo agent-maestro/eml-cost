@@ -302,6 +302,28 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Fail if predicted decimal-digits lost > this budget.",
     )
 
+    # lint ----------------------------------------------------------------
+    pl = sub.add_parser(
+        "lint",
+        help=("Scan a Python file for sympy.simplify/factor/expand/cse/"
+              "lambdify calls and predict their wall-time before they run."),
+    )
+    pl.add_argument("paths", nargs="+", help="Source file(s) to lint.")
+    pl.add_argument(
+        "--max-seconds",
+        type=float,
+        default=None,
+        help=("Exit non-zero if any predicted simplify/factor exceeds "
+              "this wall-time budget. Pre-commit usable."),
+    )
+    pl.add_argument(
+        "--severity",
+        choices=("info", "warn", "error"),
+        default="info",
+        help=("Only report findings at or above this severity. "
+              "info: < 0.2 s; warn: 0.2-5 s; error: > 5 s."),
+    )
+
     # version -------------------------------------------------------------
     sub.add_parser("version", help="Print eml-cost version + trilogy summary.")
 
@@ -318,11 +340,45 @@ def main(argv: Sequence[str] | None = None, *, out: TextIO | None = None) -> int
         return _cmd_report(args, out=target_out)
     if args.cmd == "check":
         return _cmd_check(args, out=target_out)
+    if args.cmd == "lint":
+        return _cmd_lint(args, out=target_out)
     if args.cmd == "version":
         return _cmd_version(args, out=target_out)
 
     parser.print_help()
     return EXIT_USAGE
+
+
+_SEV_ORDER = {"info": 0, "warn": 1, "error": 2}
+
+
+def _cmd_lint(args: argparse.Namespace, *, out: TextIO) -> int:
+    """eml-cost lint <file...> — pre-commit linter for SymPy compile cost."""
+    from .lint import lint_file
+
+    threshold = _SEV_ORDER[args.severity]
+    over_budget = False
+    any_findings = False
+
+    for path in args.paths:
+        for f in lint_file(path):
+            if _SEV_ORDER.get(f.severity, 0) < threshold:
+                continue
+            any_findings = True
+            print(f.message, file=out)
+            if (args.max_seconds is not None
+                    and f.predicted_seconds > args.max_seconds):
+                over_budget = True
+                print(
+                    f"  -> exceeds --max-seconds={args.max_seconds:.2f}s "
+                    f"(predicted {f.predicted_seconds:.2f}s)",
+                    file=out,
+                )
+    if not any_findings:
+        print("(no findings)", file=out)
+    if over_budget:
+        return EXIT_THRESHOLD_VIOLATION
+    return EXIT_OK
 
 
 def _entrypoint() -> None:
