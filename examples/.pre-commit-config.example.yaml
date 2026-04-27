@@ -1,0 +1,37 @@
+# Example .pre-commit-config.yaml using the eml-cost check hook.
+#
+# Drop this file (renamed to .pre-commit-config.yaml) into your repo
+# root, install pre-commit (pip install pre-commit && pre-commit
+# install), and the eml-cost gate runs on every commit that touches
+# expressions.txt.
+#
+# Replace the budgets below with what your team is willing to tolerate.
+# Suggested starting points:
+#   - --max-simplify-ms 200    pragmatic web/app dev
+#   - --max-simplify-ms 1000   research / notebook environments
+#   - --max-digits-lost 3      the numerics team can usually stomach this
+#   - --max-digits-lost 1      financial / safety-critical code
+
+repos:
+  - repo: local
+    hooks:
+      - id: eml-cost
+        name: eml-cost numerical / compile-cost gate
+        entry: eml-cost check --file
+        language: system
+        files: ^expressions\.txt$
+        args: [--max-simplify-ms, "200", --max-digits-lost, "3"]
+        pass_filenames: false
+
+# Optional companion hook: enforce that the expressions.txt file
+# parses with SymPy on every commit (catches typos before they hit
+# the budget gate). Comment out if you don't want it.
+#
+#  - repo: local
+#    hooks:
+#      - id: expressions-parse
+#        name: expressions.txt parses with SymPy
+#        entry: python -c "import sympy as sp; [sp.sympify(l) for l in open('expressions.txt') if l.strip() and not l.strip().startswith('#')]"
+#        language: system
+#        files: ^expressions\.txt$
+#        pass_filenames: false

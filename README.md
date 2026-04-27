@@ -113,6 +113,106 @@ profiles = [PfaffianProfile.from_expression(r["sympy_expr"]) for r in rows]
 For an interactive walk-through with plots, see
 [`notebooks/quickstart.ipynb`](notebooks/quickstart.ipynb).
 
+## Command-line interface (0.7.1+)
+
+`eml-cost` ships with a console command that exposes the prediction
+trilogy at the shell:
+
+```bash
+# Pretty report for one or more expressions
+eml-cost report "exp(exp(x))" "sin(x**2)"
+
+# JSON for machine consumers
+eml-cost report --json "exp(x) + log(x+1)"
+
+# Read one expression per line (use - for stdin; # comments allowed)
+eml-cost report --file expressions.txt
+
+# Pre-commit gate: exits non-zero if any budget is exceeded
+eml-cost check "exp(exp(x)) + sin(x**2)" \
+  --max-simplify-ms 200 \
+  --max-digits-lost 3
+```
+
+What `report` shows for each expression:
+  - Pfaffian profile: `pfaffian_r`, `max_path_r`, `eml_depth`,
+    `predicted_depth`, PNE flag
+  - `estimate_time` per proxy: simplify / factor / cse / lambdify
+    predicted ms with 95% CI
+  - `predict_precision_loss`: predicted relerr, predicted decimal
+    digits lost, 95% CI
+
+Exit codes for `check`:
+
+| code | meaning |
+|------|---------|
+| 0    | all checks passed |
+| 1    | at least one threshold violation (`check` only) |
+| 2    | at least one expression failed to parse |
+| 64   | usage error (no expressions given) |
+
+### Pre-commit hook recipe
+
+Block any commit that introduces a SymPy expression exceeding your
+team's compile-time or numerical-precision budgets. Drop a list of
+the expressions you care about into a tracked file (one per line,
+`#` comments allowed), then add the hook to your repo's
+`.pre-commit-config.yaml`:
+
+```yaml
+- repo: local
+  hooks:
+    - id: eml-cost
+      name: eml-cost numerical / compile-cost gate
+      entry: eml-cost check --file
+      language: system
+      files: ^expressions\.txt$
+      args: [--max-simplify-ms, "200", --max-digits-lost, "3"]
+```
+
+`expressions.txt` contents:
+
+```
+# Each line is one SymPy-parseable expression.
+# Blank lines and # comments are skipped.
+# This file is the authoritative list of expressions the team has
+# committed to keeping under the budget below.
+
+exp(exp(x)) + sin(x**2)
+1/(1 + exp(-x))
+log(x + sqrt(x**2 + 1))
+
+# Add more as you go. Removing an expression is the only way to
+# legitimately drop a budget breach below the threshold.
+```
+
+Both files live alongside the rest of your repo. The hook runs
+locally on every commit (and in CI if you use `pre-commit run --all-files`
+in the workflow). A complete working sample lives at
+[`examples/.pre-commit-config.example.yaml`](examples/.pre-commit-config.example.yaml).
+
+### CI integration (GitHub Actions, etc.)
+
+Same `eml-cost check` invocation works in any CI:
+
+```yaml
+# .github/workflows/eml-cost.yml
+name: eml-cost
+on: [push, pull_request]
+jobs:
+  budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install eml-cost
+      - run: eml-cost check --file expressions.txt --max-simplify-ms 200 --max-digits-lost 3
+```
+
+The check is deterministic — same expression file + same `eml-cost`
+version produces the same exit code on every run.
+
 ## Result shape
 
 ```python

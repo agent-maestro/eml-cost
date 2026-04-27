@@ -1,0 +1,20 @@
+# expressions.example.txt
+#
+# Companion file for examples/.pre-commit-config.example.yaml.
+# Each non-blank, non-# line is one SymPy-parseable expression.
+# Rename to expressions.txt and put at your repo root, then list
+# the expressions you commit to keeping under budget.
+
+# Sigmoid (the canonical numerically-stable form):
+1/(1 + exp(-x))
+
+# Sigmoid (an algebraically-equivalent form that drifts at extreme x):
+# (uncomment to see the budget gate fire at higher max-digits-lost values)
+# tanh(x/2)/2 + 1/2
+
+# Composition examples:
+exp(exp(x)) + sin(x**2)
+log(x + sqrt(x**2 + 1))
+
+# Polynomial (always cheap):
+(x + 1) * (x + 2) * (x + 3)

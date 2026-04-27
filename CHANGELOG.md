@@ -6,6 +6,89 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.8.0] — 2026-04-27 — `recommend_form(expr)` narrow-scope numerical-form recommender
+
+This release ships a deliberately-narrow recommender that fires on
+**only** the four expression families with E-193 Phase 3 Spearman
+rho >= 0.77 between predicted EML depth and measured float64
+mpmath_max_relerr. On every other expression it returns ``None``.
+
+The general-purpose form recommender was deliberately not shipped in
+0.7.0 (E-193 Phase 3 best-pick = 30 percent on the full 10-family
+test, well below the 70 percent product threshold). This release adds
+the narrow-scope variant for the four families that did concord.
+
+### Added
+
+- **`recommend_form(expr)`** — returns a ``RecommendedForm`` if the
+  expression is in one of:
+  - `sigmoid` (rho = +0.800) — canonical form `1 / (1 + exp(-x))`
+  - `exponential_decay` (rho = +0.775) — canonical form `exp(coeff * x)`
+    with the coefficient folded into a single multiplicative term
+  - `logistic_growth` (rho = +0.775) — canonical form
+    `K / (1 + exp(-r * (t - t0)))`
+  - `cardiac_oscillator` (rho = +0.866) — canonical form
+    `A * cos(omega * t + phi)`
+  Returns `None` for everything else.
+- **`RecommendedForm`** dataclass with fields: `family`,
+  `canonical_form`, `input_predicted_relerr`,
+  `recommended_predicted_relerr`, `digits_saved`, `rho`, `honest_note`.
+- **`SUPPORTED_FAMILIES`** tuple constant (the four families).
+- **`FAMILY_RHO`** dict mapping family name -> Spearman rho.
+
+### Honest framing baked in
+
+  - Every `RecommendedForm` carries a non-empty `honest_note` field
+    explaining the four-family scope and naming the un-shipped
+    general-purpose recommender as a deliberate choice.
+  - Family detection is structural: `recommend_form("besselj(0, x)")`,
+    `recommend_form("x**3 + 2*x")`, and the six non-concordant E-193
+    families (`hill_kernel`, `softmax_2key`, `nernst_potential`,
+    `gaussian_kernel_2d`, `rc_charging`, `traveling_wave`) all return
+    `None`.
+  - The Spearman rho values come from `phase3_killer.json` and are
+    asserted by the test suite to catch silent drift.
+
+### Tests
+
+27 new `recommend_form` tests; full eml-cost suite 221/221 green.
+mypy --strict clean (12 source files).
+
+Source data: `monogate-research/exploration/E193_numerical_stability/
+phase3_killer.json` + `form_with_stability.csv`.
+
+## [0.7.2] — 2026-04-27 — pre-commit recipe + working example files
+
+Documentation-driven patch: makes the 0.7.1 CLI immediately usable in
+a pre-commit hook or CI without the user having to write the YAML
+themselves.
+
+### Added
+
+- **README "Command-line interface" section** documenting `eml-cost
+  report` / `eml-cost check` / `--file` / exit codes.
+- **README "Pre-commit hook recipe"** showing the
+  `.pre-commit-config.yaml` block + companion `expressions.txt` file
+  pattern (one expression per line, `#` comments allowed).
+- **README "CI integration" snippet** for GitHub Actions.
+- **`examples/.pre-commit-config.example.yaml`** — drop-in pre-commit
+  config, with `--max-simplify-ms 200 --max-digits-lost 3` defaults
+  and a commented optional companion hook to verify SymPy parses each
+  line before the budget check.
+- **`examples/expressions.example.txt`** — sample expression list
+  exercising sigmoid / composition / sqrt / polynomial cases. All four
+  pass the documented `200ms / 3 digits` budgets.
+
+### Verified
+
+- Running the example `expressions.txt` through `eml-cost check
+  --file ...` with the documented budgets produces `exit=0` (4 OK).
+
+### No code changes
+
+This is a docs-and-examples release. The 0.7.1 CLI module, the
+prediction trilogy, and all model coefficients are unchanged.
+
 ## [0.7.1] — 2026-04-26 — `eml-cost` CLI (UX layer for the trilogy)
 
 This release ships an installable `eml-cost` console command that makes
