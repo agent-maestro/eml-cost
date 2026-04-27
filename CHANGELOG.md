@@ -6,6 +6,102 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.9.0] — 2026-04-27 — `PFAFFIAN_NOT_EML_R` second expansion (32 → 68 entries)
+
+S/R-#10 substrate-coverage audit. Direct enumeration of
+``sympy.functions.special`` surfaced 36 named non-elementary
+SymPy classes that the 0.3.0 expansion had missed. They were being
+silently treated as depth-0 atoms by the cost detector (same
+class of bug the 0.3.0 expansion fixed). This release adds them
+with chain orders derived from each function's defining ODE or
+closure relation under the Khovanskii convention.
+
+The original expansion target was 60+; the actual landing is 68.
+
+### Added — 36 new ``PFAFFIAN_NOT_EML_R`` entries
+
+  - **Spherical Bessel & Hankel** (4): ``jn``, ``yn``, ``hn1``, ``hn2``.
+    Same chain orders as the unscaled Bessel siblings (3 / 5 / 5 / 5).
+  - **Marcum Q** (1): ``marcumq`` — Bessel-derived integral, chain 3.
+  - **Erf variants** (4): ``erf2``, ``erfinv``, ``erfcinv``, ``erf2inv``.
+  - **Exponential integrals** (3): ``expint`` (E_n), ``E1``, ``Li``.
+  - **Gamma family** (8): ``digamma``, ``trigamma``, ``lowergamma``,
+    ``uppergamma``, ``multigamma``, ``harmonic``, ``factorial``,
+    ``factorial2``.
+  - **Pochhammer / subfactorial** (3): ``RisingFactorial``,
+    ``FallingFactorial``, ``subfactorial``.
+  - **Elliptic third kind** (1): ``elliptic_pi``.
+  - **Zeta family** (4): ``dirichlet_eta``, ``lerchphi``,
+    ``stieltjes``, ``riemann_xi``.
+  - **Hypergeometric extensions** (2): ``meijerg``, ``appellf1``.
+  - **Mathieu functions** (4): ``mathieuc``, ``mathieus``,
+    ``mathieucprime``, ``mathieusprime``.
+  - **Spherical harmonics** (2): ``Ynm``, ``Znm``.
+
+### Honest auto-evaluation note
+
+  - SymPy auto-evaluates several of these to elementary forms when
+    a parameter is a positive integer literal:
+    - ``lowergamma(2, x)`` → ``1 − (x+1)·exp(−x)`` (elementary)
+    - ``RisingFactorial(x, 2)`` → ``x·(x + 1)`` (polynomial)
+    - ``factorial(3)`` → ``6`` (rational)
+
+    The detector behaves correctly here: once SymPy has rewritten
+    the expression into an elementary form, the registry entry no
+    longer matches, and ``is_pfaffian_not_eml`` returns ``False``
+    — because the *resulting expression* really is elementary.
+    The new entries fire on the genuinely-non-elementary cases
+    (symbolic parameters, indices that keep the call
+    unevaluated). This is documented in the new test file.
+
+### Fixed (S/R-#9 adversarial bench finding)
+
+  - ``is_pfaffian_not_eml(hyper((), (), x))`` previously returned
+    ``True`` because ``hyper`` is in the registry. SymPy keeps
+    ``0F0(;;x) = exp(x)`` in this canonical form and never
+    auto-simplifies (verified: ``.doit()`` is a no-op,
+    ``.rewrite(exp)`` is a no-op). The detector now short-circuits
+    empty-parameter ``hyper`` to elementary. Same fix applies to
+    ``sp.hyper([1], [1], x)`` because SymPy cancels ``[1]/[1]`` →
+    ``hyper((), (), x)``. Found by ``bench/adversarial_runner.py``,
+    rows 29 + 30; documented in ``bench/ADVERSARIAL_FINDINGS.md``.
+
+### Adversarial bench (S/R-#9 deliverable)
+
+100-expression stress bench at ``bench/adversarial.csv`` covering
+10 categories (deep nesting, mixed PNE/elementary, auto-eval traps,
+limits/sums, complex arithmetic, distributions/discrete, PNE-of-PNE
+compositions, numeric edge cases, structural objects). The runner
+``bench/adversarial_runner.py`` produces a per-row results CSV plus
+a human-readable / JSON summary. Findings are written up honestly in
+``bench/ADVERSARIAL_FINDINGS.md``: 99/100 cases classify cleanly
+post-fix, with one documented limitation (``polylog(1, x)`` flags as
+PNE on AST level even though it equals ``-log(1 - x)`` mathematically
+— SymPy itself doesn't auto-rewrite that one).
+
+### Tests
+
+19 new tests in ``tests/test_v090_registry_extension.py``; full
+eml-cost suite **240/240 green** (was 221 before this release).
+mypy --strict clean.
+
+### Migration
+
+No API changes. Code that previously got
+``is_pfaffian_not_eml=False`` for these functions will now get
+``True``. This is a correctness fix — the previous behaviour was
+silently treating them as depth-0 atoms. Conversely,
+``hyper((), (), x)`` previously got ``True`` (false positive); it
+now correctly returns ``False``.
+
+### Source
+
+  - Registry expansion source: derived from direct enumeration of
+    ``sympy.functions.special`` modules.
+  - Adversarial bench source: ``bench/adversarial.csv`` and
+    ``bench/ADVERSARIAL_FINDINGS.md`` (both shipped publicly with
+    the wheel).
+
 ## [0.8.0] — 2026-04-27 — `recommend_form(expr)` narrow-scope numerical-form recommender
 
 This release ships a deliberately-narrow recommender that fires on

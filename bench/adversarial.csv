@@ -1,0 +1,101 @@
+id,category,expression,expected,notes
+1,deep_nesting,"sp.exp(sp.exp(sp.exp(x)))",ELEMENTARY,three-level exp tower
+2,deep_nesting,"sp.exp(sp.exp(sp.exp(sp.exp(x))))",ELEMENTARY,four-level exp tower
+3,deep_nesting,"sp.exp(sp.exp(sp.exp(sp.exp(sp.exp(x)))))",ELEMENTARY,five-level exp tower
+4,deep_nesting,"sp.log(sp.log(sp.log(sp.log(x))))",ELEMENTARY,four nested logs
+5,deep_nesting,"sp.sin(sp.sin(sp.sin(sp.sin(x))))",ELEMENTARY,four nested sins; oscillation count compounds
+6,deep_nesting,"sp.exp(sp.log(sp.exp(sp.log(x))))",ELEMENTARY,exp/log alternation; should auto-simplify to x
+7,deep_nesting,"sp.cos(sp.sin(sp.cos(sp.sin(sp.cos(x)))))",ELEMENTARY,oscillation chain
+8,deep_nesting,"sp.sqrt(sp.sqrt(sp.sqrt(sp.sqrt(x))))",ELEMENTARY,fourth-root via repeated sqrt
+9,deep_nesting,"sp.tan(sp.tan(sp.tan(x)))",ELEMENTARY,nested tan
+10,deep_nesting,"sp.exp(sp.exp(sp.exp(sp.exp(sp.exp(sp.exp(x))))))",ELEMENTARY,six-level exp tower; depth stress
+11,mixed_pne_elementary,"sp.exp(sp.besselj(0, x))",PNE,elementary wrapping Bessel
+12,mixed_pne_elementary,"sp.sin(sp.gamma(x))",PNE,sin of gamma
+13,mixed_pne_elementary,"sp.log(sp.zeta(x + 2))",PNE,log of zeta with offset to keep finite
+14,mixed_pne_elementary,"sp.sqrt(sp.erfinv(x / 2))",PNE,sqrt of inverse erf
+15,mixed_pne_elementary,"sp.exp(sp.LambertW(x))",PNE,exp of Lambert W
+16,mixed_pne_elementary,"sp.exp(sp.harmonic(x))",PNE,exp of harmonic numbers
+17,mixed_pne_elementary,"sp.log(sp.elliptic_k(x / 2))",PNE,log of elliptic K
+18,mixed_pne_elementary,"sp.tan(sp.polygamma(1, x))",PNE,tan of trigamma
+19,mixed_pne_elementary,"sp.sin(sp.factorial(x))",PNE,sin of factorial (gamma extension)
+20,mixed_pne_elementary,"sp.cos(sp.dirichlet_eta(x + 2))",PNE,cos of dirichlet eta
+21,auto_eval_traps,"sp.lowergamma(2, x)",ELEMENTARY,SymPy expands to 1 - (x+1)*exp(-x)
+22,auto_eval_traps,"sp.uppergamma(3, x)",ELEMENTARY,SymPy expands to elementary closed form
+23,auto_eval_traps,"sp.factorial(5)",ELEMENTARY,evaluates to 120
+24,auto_eval_traps,"sp.RisingFactorial(x, 3)",ELEMENTARY,evaluates to polynomial x*(x+1)*(x+2)
+25,auto_eval_traps,"sp.FallingFactorial(x, 4)",ELEMENTARY,evaluates to polynomial x*(x-1)*(x-2)*(x-3)
+26,auto_eval_traps,"sp.polylog(0, x)",ELEMENTARY,polylog(0 x) = x/(1-x) — rational
+27,auto_eval_traps,"sp.polylog(1, x)",ELEMENTARY,polylog(1 x) = -log(1-x)
+28,auto_eval_traps,"sp.polylog(-1, x)",ELEMENTARY,polylog(-1 x) = x/(1-x)**2
+29,auto_eval_traps,"sp.hyper([], [], x)",ELEMENTARY,empty hypergeometric = exp(x)
+30,auto_eval_traps,"sp.hyper([1], [1], x)",ELEMENTARY,1F1(1;1;x) = exp(x)
+31,limits_and_summation,"sp.Limit(sp.sin(x)/x, x, 0)",NON_NUMERIC,classical limit; should not crash
+32,limits_and_summation,"sp.Limit(sp.exp(-x), x, sp.oo)",NON_NUMERIC,limit at infinity
+33,limits_and_summation,"sp.Sum(1/k**2, (k, 1, sp.oo))",NON_NUMERIC,zeta(2) infinite sum
+34,limits_and_summation,"sp.Sum(x**k/sp.factorial(k), (k, 0, sp.oo))",NON_NUMERIC,exp(x) as series
+35,limits_and_summation,"sp.Integral(sp.exp(-x**2), x)",NON_NUMERIC,erf integrand without limits
+36,limits_and_summation,"sp.Integral(sp.sin(x)/x, (x, 0, 1))",NON_NUMERIC,Si-like definite integral
+37,limits_and_summation,"sp.Derivative(sp.exp(x), x)",ELEMENTARY,unevaluated derivative; could be exp(x)
+38,limits_and_summation,"sp.Derivative(sp.besselj(0, x), x, 2)",PNE,second derivative of Bessel (still PNE)
+39,limits_and_summation,"sp.Product(x + k, (k, 0, 5))",ELEMENTARY,finite product = polynomial
+40,limits_and_summation,"sp.Limit(sp.sin(x), x, sp.oo)",NON_NUMERIC,limit doesn't exist; sin has infinite zeros
+41,pathological_compositions,"sp.exp(x) + sp.log(x) + sp.sin(x) + sp.cos(x) + sp.tan(x)",ELEMENTARY,five elementary terms summed
+42,pathological_compositions,"sum([x**k for k in range(15)], sp.S.Zero)",ELEMENTARY,polynomial of degree 14
+43,pathological_compositions,"sp.exp(x) * sp.log(x) * sp.sin(x) * sp.cos(x)",ELEMENTARY,four-way elementary product
+44,pathological_compositions,"sum([sp.sin(k*x) for k in range(1, 11)], sp.S.Zero)",ELEMENTARY,truncated Fourier series
+45,pathological_compositions,"sp.Pow(x + 1, 50)",ELEMENTARY,binomial expansion stress
+46,pathological_compositions,"(x**3 + 2*x + 1) / (x**4 - 3*x + 2)",ELEMENTARY,rational function
+47,pathological_compositions,"sp.exp(sum([x**k for k in range(1, 6)], sp.S.Zero))",ELEMENTARY,exp of polynomial
+48,pathological_compositions,"sp.log(sum([x**k for k in range(1, 6)], sp.S(1)))",ELEMENTARY,log of polynomial
+49,pathological_compositions,"sp.Add(*[sp.sin(x*k) + sp.cos(x*k) for k in range(1, 8)])",ELEMENTARY,oscillation salad
+50,pathological_compositions,"sp.exp(sp.sin(sp.cos(sp.tan(sp.exp(sp.log(x))))))",ELEMENTARY,heavy nested elementary
+51,complex_arithmetic,"sp.log(sp.S.NegativeOne)",NON_NUMERIC,log(-1) = I*pi (complex constant)
+52,complex_arithmetic,"sp.sqrt(sp.S.NegativeOne)",NON_NUMERIC,sqrt(-1) = I (imaginary unit)
+53,complex_arithmetic,"sp.log(sp.I)",NON_NUMERIC,log(I) = I*pi/2
+54,complex_arithmetic,"sp.exp(sp.I * x)",ELEMENTARY,Euler form; complex but elementary
+55,complex_arithmetic,"(x + sp.I*y) ** 2",ELEMENTARY,complex polynomial
+56,complex_arithmetic,"sp.re(sp.exp(sp.I * x))",ELEMENTARY,Re of complex exp = cos(x)
+57,complex_arithmetic,"sp.im(sp.exp(sp.I * x))",ELEMENTARY,Im of complex exp = sin(x)
+58,complex_arithmetic,"sp.log(x + sp.I*y)",ELEMENTARY,complex logarithm
+59,complex_arithmetic,"sp.asin(sp.S(2))",NON_NUMERIC,asin outside [-1,1]; complex result
+60,complex_arithmetic,"sp.acosh(sp.S(1)/2)",NON_NUMERIC,acosh outside [1,∞); complex result
+61,distribution_discrete,"sp.Heaviside(x)",NON_NUMERIC,step function — distribution
+62,distribution_discrete,"sp.DiracDelta(x)",NON_NUMERIC,Dirac delta — distribution
+63,distribution_discrete,"sp.DiracDelta(x - sp.Symbol('a'))",NON_NUMERIC,shifted Dirac delta
+64,distribution_discrete,"sp.KroneckerDelta(sp.Symbol('i'), sp.Symbol('j'))",NON_NUMERIC,discrete Kronecker delta
+65,distribution_discrete,"sp.SingularityFunction(x, 0, 2)",NON_NUMERIC,piecewise polynomial
+66,distribution_discrete,"sp.Heaviside(x) * sp.exp(-x)",NON_NUMERIC,distribution × elementary
+67,distribution_discrete,"sp.sign(x)",NON_NUMERIC,sign function; not analytic
+68,distribution_discrete,"sp.floor(x)",NON_NUMERIC,floor; piecewise constant
+69,distribution_discrete,"sp.ceiling(x)",NON_NUMERIC,ceiling
+70,distribution_discrete,"sp.Mod(x, sp.S(3))",NON_NUMERIC,modulo; discrete
+71,pne_compositions,"sp.besselj(0, sp.besselj(0, x))",PNE,Bessel composed with Bessel
+72,pne_compositions,"sp.gamma(sp.gamma(x))",PNE,gamma of gamma
+73,pne_compositions,"sp.zeta(sp.zeta(x + 2))",PNE,zeta of zeta
+74,pne_compositions,"sp.erf(sp.erf(x))",PNE,erf of erf
+75,pne_compositions,"sp.LambertW(sp.LambertW(x))",PNE,Lambert W of Lambert W
+76,pne_compositions,"sp.polygamma(1, sp.polygamma(1, x))",PNE,polygamma compose
+77,pne_compositions,"sp.elliptic_k(sp.elliptic_e(x / 2))",PNE,elliptic compose
+78,pne_compositions,"sp.exp(sp.exp(sp.gamma(x)))",PNE,double exp wrapping gamma
+79,pne_compositions,"sp.besselj(0, x) + sp.bessely(0, x)",PNE,Bessel sum
+80,pne_compositions,"sp.gamma(x) * sp.zeta(x + 2) * sp.erf(x)",PNE,three-way PNE product
+81,numeric_edge_cases,"sp.exp(sp.S(1000))",ELEMENTARY,large exp; symbolic finite
+82,numeric_edge_cases,"sp.log(sp.S(1)/sp.S(10)**100)",ELEMENTARY,log of tiny rational
+83,numeric_edge_cases,"sp.exp(x) + sp.S(10)**300",ELEMENTARY,sum with overflow-prone literal
+84,numeric_edge_cases,"sp.sin(sp.S(10)**10)",ELEMENTARY,sin of huge integer
+85,numeric_edge_cases,"sp.S(1) / x",ELEMENTARY,symbolic 1/x
+86,numeric_edge_cases,"sp.exp(sp.oo)",NON_NUMERIC,exp at infinity
+87,numeric_edge_cases,"sp.oo + sp.S(1)",NON_NUMERIC,arithmetic with infinity
+88,numeric_edge_cases,"sp.zoo",NON_NUMERIC,complex infinity
+89,numeric_edge_cases,"sp.nan",NON_NUMERIC,not-a-number
+90,numeric_edge_cases,"sp.S.Zero / sp.S.Zero",NON_NUMERIC,0/0 indeterminate
+91,structural,"sp.Tuple(sp.exp(x), sp.log(x))",NON_NUMERIC,Tuple is a container
+92,structural,"sp.Matrix([[sp.exp(x)], [sp.log(x)]])",NON_NUMERIC,Matrix object
+93,structural,"sp.Piecewise((x, x > 0), (-x, True))",NON_NUMERIC,piecewise expression
+94,structural,"sp.Min(x, y)",NON_NUMERIC,Min function
+95,structural,"sp.Max(x, y)",NON_NUMERIC,Max function
+96,structural,"sp.Abs(x)",NON_NUMERIC,absolute value (non-analytic at 0)
+97,structural,"sp.Lambda(x, sp.exp(x))",NON_NUMERIC,Lambda is a callable
+98,structural,"sp.Function('f')(x)",NON_NUMERIC,undefined function
+99,structural,"x ** sp.Rational(1, 2)",ELEMENTARY,sqrt as rational power
+100,structural,"sp.Eq(sp.exp(x), sp.S(1))",NON_NUMERIC,equation object

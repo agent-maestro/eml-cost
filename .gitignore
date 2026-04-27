@@ -36,3 +36,4 @@ env/
 .idea/
 *.swp
 .DS_Store
+adversarial_results.csv

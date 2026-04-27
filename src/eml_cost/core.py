@@ -83,12 +83,90 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     "elliptic_k": 3, # K(m) — chain {K, E, 1/m}
     "elliptic_e": 3, # E(m) — partner of K
     "elliptic_f": 4, # F(phi|m) — incomplete, depends on both args
+    # ---------------------------------------------------------------
+    # Added in eml-cost 0.9.0 (S/R-#10 substrate-coverage audit). The
+    # 0.3.0 expansion left 36 named SymPy non-elementary functions
+    # treated as depth-0 atoms. Verified by direct sympy.functions.
+    # special enumeration. Chain orders below derived from each
+    # function's defining ODE / closure relation per Khovanskii.
+    # ---------------------------------------------------------------
+    # Spherical Bessel / Hankel — besselj/bessely with sqrt(pi/(2z)) prefactor
+    "jn": 3,          # spherical j_n — same chain as besselj
+    "yn": 5,          # spherical y_n — log-singular like bessely
+    "hn1": 5,         # spherical Hankel — composition jn ± i·yn
+    "hn2": 5,
+    "marcumq": 3,     # Marcum Q — integral with besseli kernel
+    # Erf variants
+    "erf2": 2,        # erf2(x,y) = erf(y) − erf(x), linear comb
+    "erfinv": 3,      # inverse erf — extends chain by one
+    "erfcinv": 3,     # erfcinv(x) = erfinv(1 − x)
+    "erf2inv": 3,     # generalised inverse — same chain order
+    # Exponential integrals
+    "expint": 3,      # E_n(x) — generalised exp integral
+    "E1": 3,          # alias for expint(1, x)
+    "Li": 3,          # offset log integral, Li(x) = li(x) − li(2)
+    # Gamma family extension
+    "digamma": 2,     # ψ(x) = polygamma(0, x); chain {Γ, ψ}
+    "trigamma": 3,    # ψ'(x) = polygamma(1, x)
+    "lowergamma": 3,  # γ(s, x) — incomplete lower gamma
+    "uppergamma": 3,  # Γ(s, x) — incomplete upper gamma
+    "multigamma": 3,  # Γ_p(x) — multivariate gamma; product of Γ
+    "harmonic": 3,    # H(n, m) — chain extends digamma
+    "factorial": 2,   # n! = Γ(n+1) for non-integer extension
+    "factorial2": 2,  # n!! — double factorial via Γ
+    "subfactorial": 3, # !n — chain {Γ, exp, !n}
+    "RisingFactorial": 2,  # (x)_n = Γ(x+n)/Γ(x)
+    "FallingFactorial": 2, # x(x−1)…(x−n+1) = Γ(x+1)/Γ(x−n+1)
+    # Elliptic third kind
+    "elliptic_pi": 4, # Π(n; φ|m) — third kind, chain {K, E, Π}
+    # Zeta family extension
+    "dirichlet_eta": 4,  # η(s) = (1 − 2^(1−s))·ζ(s)
+    "lerchphi": 4,    # Lerch transcendent — generalises polylog/ζ
+    "stieltjes": 4,   # Stieltjes constants — derivatives of ζ at s=1
+    "riemann_xi": 5,  # ξ(s) = (s−1)π^(−s/2)Γ(s/2+1)ζ(s)
+    # Hypergeometric extensions
+    "meijerg": 4,     # Meijer G — most general hypergeometric
+    "appellf1": 3,    # Appell F1 — bivariate hypergeometric
+    # Mathieu functions — periodic ODE with parameter
+    "mathieuc": 4,    # cos-type Mathieu C(a, q, x)
+    "mathieus": 4,    # sin-type Mathieu S(a, q, x)
+    "mathieucprime": 4,  # derivative of mathieuc
+    "mathieusprime": 4,  # derivative of mathieus
+    # Spherical harmonics — assoc_legendre × cos/sin via Euler
+    "Ynm": 3,         # Y_n^m(θ, φ) — complex spherical harmonic
+    "Znm": 3,         # Z_n^m(θ, φ) — real spherical harmonic
 }
 
 
 _TANH_LIKE = (sp.tanh, sp.atan, sp.atanh, sp.asinh, sp.acosh)
 _SIN_LIKE = (sp.sin, sp.cos)
 _HYPER_PAIR = (sp.sinh, sp.cosh)
+
+
+def _is_registered_pne(sub: sp.Basic) -> bool:
+    """Return True if ``sub`` is a PNE primitive call that does NOT
+    auto-simplify to an elementary closed form.
+
+    Special case: SymPy keeps the canonical form of ``0F0(;;x) = exp(x)``
+    as ``hyper((), (), x)`` — the parameter sequences are empty tuples
+    that never trigger an automatic rewrite. The resulting expression IS
+    elementary, so we don't flag it as PNE.
+
+    Surfaced by the adversarial bench (``bench/adversarial.csv`` rows
+    29 + 30); see ``bench/ADVERSARIAL_FINDINGS.md``.
+    """
+    if not hasattr(sub, "func"):
+        return False
+    fname = getattr(sub.func, "__name__", "")
+    if fname not in PFAFFIAN_NOT_EML_R:
+        return False
+    if fname == "hyper" and len(sub.args) >= 2:
+        try:
+            if len(sub.args[0]) == 0 and len(sub.args[1]) == 0:
+                return False
+        except TypeError:
+            pass
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +184,7 @@ def is_pfaffian_not_eml(expr: sp.Basic) -> bool:
     if not isinstance(expr, sp.Basic):
         return False
     for sub in sp.preorder_traversal(expr):
-        if hasattr(sub, "func") and getattr(sub.func, "__name__", "") in PFAFFIAN_NOT_EML_R:
+        if _is_registered_pne(sub):
             return True
     return False
 
@@ -159,7 +237,7 @@ def _collect_chain(expr: sp.Basic, chains: set[sp.Basic]) -> None:
         return
 
     fname = getattr(func, "__name__", "")
-    if fname in PFAFFIAN_NOT_EML_R:
+    if fname in PFAFFIAN_NOT_EML_R and _is_registered_pne(expr):
         r_value = PFAFFIAN_NOT_EML_R[fname]
         for i in range(r_value):
             chains.add(sp.Symbol(f"__chain_{fname}_{i}_{hash(expr) % 10**9}"))
