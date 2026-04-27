@@ -53,7 +53,7 @@ import functools
 import re
 from dataclasses import dataclass
 from importlib.resources import files as _files
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import sympy as sp
 
@@ -114,14 +114,14 @@ def _safe_expr(s: str) -> str:
 
 
 @functools.lru_cache(maxsize=1)
-def _corpus_rows() -> tuple[dict, ...]:
+def _corpus_rows() -> tuple[dict[str, Any], ...]:
     """Load the 576-row precomputed corpus from the package data file.
 
     Cached after first call. Each row is a dict with keys: name,
     domain, expr, cost_class, profile (PfaffianProfile object).
     """
     data_path = _files("eml_cost.data") / "corpus_578.csv"
-    rows: list[dict] = []
+    rows: list[dict[str, Any]] = []
     with data_path.open("r", encoding="utf-8") as f:
         for r in csv.DictReader(f):
             profile = PfaffianProfile(
@@ -230,7 +230,7 @@ def find_siblings(
     if domain is not None:
         candidates = tuple(r for r in candidates if r["domain"] == domain)
 
-    scored: list[tuple[float, dict]] = []
+    scored: list[tuple[float, dict[str, Any]]] = []
     for row in candidates:
         if exclude_self and row["expr"] == query_str:
             continue

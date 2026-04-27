@@ -36,6 +36,7 @@ in ``monogate-research/exploration/E191_estimate_time``.
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Union
@@ -147,7 +148,9 @@ def _try_resolve(node: ast.AST, source: str) -> Optional[sp.Basic]:
     return None
 
 
-def _walk_calls(tree: ast.AST):
+def _walk_calls(
+    tree: ast.AST,
+) -> "Iterator[tuple[ast.Call, str]]":
     """Yield (call_node, function_name) for every Call whose function
     name matches a ``_SIMPLIFY_NAMES`` key. Detects both
     ``sp.simplify(expr)`` and ``expr.simplify()``.
@@ -197,7 +200,7 @@ def lint_source(source: str, filename: str = "<string>") -> list[Finding]:
             continue
 
         try:
-            est = estimate_time(expr, proxy=proxy)
+            est_any = estimate_time(expr, proxy=proxy)
         except (ValueError, TypeError) as e:
             findings.append(Finding(
                 file=filename, line=node.lineno, col=node.col_offset,
@@ -209,6 +212,14 @@ def lint_source(source: str, filename: str = "<string>") -> list[Finding]:
             ))
             continue
 
+        # estimate_time(proxy=<single-name>) returns a TimeEstimate; with
+        # proxy='all' it returns a dict. Narrow for mypy.
+        if isinstance(est_any, dict):
+            est = est_any.get(proxy)
+            if est is None:
+                continue
+        else:
+            est = est_any
         seconds = est.predicted_ms / 1000.0
         sev = _severity_for(seconds)
         msg = (f"{filename}:{node.lineno}: predicted {name:<10} "

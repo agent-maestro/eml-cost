@@ -115,7 +115,7 @@ class DynamicsProfile:
 
 
 def _collect_distinct_args(
-    expr: sp.Basic, op_class: type
+    expr: sp.Basic, op_class: type[sp.Basic]
 ) -> set[sp.Expr]:
     """Walk ``expr`` and collect distinct arguments of ``op_class`` calls.
 
