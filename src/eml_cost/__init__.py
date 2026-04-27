@@ -48,6 +48,7 @@ from .recommend_form import (
     SUPPORTED_FAMILIES,
     recommend_form,
 )
+from .dynamics import DynamicsProfile, analyze_dynamics
 from .guards import CostLimitExceeded, costlimit
 from .batch import analyze_batch, cache_hit_analysis
 from .profile import DEFAULT_WEIGHTS, PfaffianProfile
@@ -60,7 +61,7 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 __all__ = [
     "__version__",
@@ -98,4 +99,6 @@ __all__ = [
     "RecommendedForm",
     "SUPPORTED_FAMILIES",
     "FAMILY_RHO",
+    "analyze_dynamics",
+    "DynamicsProfile",
 ]

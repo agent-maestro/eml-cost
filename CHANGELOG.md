@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.10.0] — 2026-04-27 — `analyze_dynamics()` headline feature
+
+E-196 Phase 4f cross-domain study (n=175 paired rows across 12
+subdomains) validated the slope-2 rule
+``r ≈ 2 * n_oscillations + 1 * n_decays`` at Spearman ρ = +0.890,
+Pearson r = +0.929. This release exposes that rule as a public API.
+
+### Added
+
+  - ``analyze_dynamics(expr) -> DynamicsProfile`` — count
+    oscillation modes, decay modes, and static components in a
+    symbolic expression. Returns the slope-2 prediction of
+    ``pfaffian_r`` plus a confidence label and human-readable
+    description.
+  - ``DynamicsProfile`` dataclass — exposes ``n_oscillations``,
+    ``n_decays``, ``n_static``, ``predicted_r``, ``actual_r``,
+    ``confidence`` (high/moderate/low), ``description``, and
+    ``domain_fit`` (strong/moderate/weak).
+  - 17 new tests covering polynomial / oscillation / decay /
+    damped-oscillator / triple-Gaussian / PNE primitive cases.
+
+### Honest framing
+
+  - **OBSERVATION** tier. ρ=0.890 is empirical, not a theorem.
+  - The slope-2 rule is calibrated for OSCILLATORY expressions.
+    It under-predicts for parallel-Gaussian or sqrt-heavy
+    expressions where Pfaffian's DAG-summed chain count exceeds
+    the simple per-mode contribution (per-domain ρ on olfactory
+    drops to 0.46).
+  - For PNE primitives (Bessel, Airy, Gamma, Lambert W), the
+    counter abstains via ``confidence = "low"``.
+  - Source: ``monogate-research/exploration/E196_algorithmic_corpus/``
+    and ``color_science_subdomain/phase4f_extended_v5_summary.json``.
+
 ## [0.9.0] — 2026-04-27 — `PFAFFIAN_NOT_EML_R` second expansion (32 → 68 entries)
 
 S/R-#10 substrate-coverage audit. Direct enumeration of
