@@ -37,3 +37,6 @@ env/
 *.swp
 .DS_Store
 adversarial_results.csv
+
+# Graphify analysis output (config in .graphifyignore is committed)
+graphify-out/
