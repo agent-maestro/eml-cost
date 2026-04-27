@@ -50,7 +50,7 @@ science engineers do the most cost queries.
 All results are seed-pinned. To independently reproduce:
 
 ```
-git clone https://github.com/almaguer1986/eml-cost
+git clone https://github.com/agent-maestro/eml-cost
 cd eml-cost
 pip install -e .
 python bench/speed_bench.py

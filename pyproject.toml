@@ -44,9 +44,9 @@ eml-cost = "eml_cost.cli:_entrypoint"
 
 [project.urls]
 Homepage = "https://monogate.org"
-Repository = "https://github.com/almaguer1986/eml-cost"
-Issues = "https://github.com/almaguer1986/eml-cost/issues"
-Changelog = "https://github.com/almaguer1986/eml-cost/blob/main/CHANGELOG.md"
+Repository = "https://github.com/agent-maestro/eml-cost"
+Issues = "https://github.com/agent-maestro/eml-cost/issues"
+Changelog = "https://github.com/agent-maestro/eml-cost/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

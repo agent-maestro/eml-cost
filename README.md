@@ -14,7 +14,7 @@ pip install eml-cost
 For local development:
 
 ```bash
-git clone https://github.com/almaguer1986/eml-cost
+git clone https://github.com/agent-maestro/eml-cost
 cd eml-cost
 pip install -e ".[dev]"
 pytest
@@ -306,7 +306,7 @@ and contribute their registered chain order under `pfaffian_r`.
 ## Links
 
 - Project home: [monogate.org](https://monogate.org)
-- Source: [github.com/almaguer1986/eml-cost](https://github.com/almaguer1986/eml-cost)
+- Source: [github.com/agent-maestro/eml-cost](https://github.com/agent-maestro/eml-cost)
 - Package: [pypi.org/project/eml-cost](https://pypi.org/project/eml-cost/)
 
 ## License
