@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.11.0] — 2026-04-27 — `find_siblings()` cross-domain structural search
+
+The 578-row cross-domain corpus is now bundled inside the package.
+`find_siblings(expr)` returns the structurally most similar
+expressions across 12 subdomains (bench-300 + E-196 + Robotics +
+Human Body + Music & Sound + Olfactory + Color Science) ranked by
+weighted Euclidean distance on the Pfaffian profile.
+
+### Added
+
+  - ``find_siblings(expr, k=5, *, domain=None, max_distance=None,
+    weights=None, exclude_self=True) -> list[Sibling]`` — top-k
+    structural neighbour search.
+  - ``Sibling`` dataclass — name, domain, expression, cost_class,
+    distance, profile.
+  - ``corpus_size()`` and ``corpus_domains()`` introspection helpers.
+  - ``data/corpus_578.csv`` packaged with precomputed PfaffianProfile
+    fields per row (one-time cost paid at build, not at runtime).
+  - 17 new tests covering corpus introspection, k-cap, sort order,
+    domain filter, max_distance, custom weights, and structural
+    sanity (cosine → cosine neighbours, polynomial → polynomial).
+
+### Honest framing
+
+  - **OBSERVATION** tier. Structural similarity is not physical
+    equivalence — two expressions with identical ``cost_class``
+    can model unrelated systems.
+  - The corpus is curated, not exhaustive. Absence of a sibling
+    means "not in our 578 sample," not "no sibling exists."
+  - Distance is in cost-class units, not normalised across
+    expression types.
+  - Source: ``monogate-research/data/bench.md`` and
+    ``exploration/E196_algorithmic_corpus/master_corpus_578.csv``.
+
 ## [0.10.0] — 2026-04-27 — `analyze_dynamics()` headline feature
 
 E-196 Phase 4f cross-domain study (n=175 paired rows across 12

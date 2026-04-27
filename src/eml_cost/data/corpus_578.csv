@@ -1,0 +1,577 @@
+domain,name,expr,cost_class,r,degree,width,c_osc,c_composite,delta_fused,is_pfaffian_not_eml,source
+avian,UV cone Gaussian S_uv(lam),exp(-(lam - mu_uv)**2/(2*sigma_uv**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v3
+avian,olfactory exp-decay receptor,c_conc*exp(-d*k_decay),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+avian,UV-odor multiplicative integration,c_conc*exp(-d*k_decay)*exp(-(lam - mu_uv)**2/(2*sigma_uv**2)),p1-d6-w2-c0,1,6,2,0,0,0,0,v3
+avian,tetrachromatic green cone Gaussian,exp(-(lam - mu_g)**2/(2*sigma_g**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v3
+avian,tetrachromatic red cone Gaussian,exp(-(lam - mu_r)**2/(2*sigma_r**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v3
+avian,magnetoreception cryptochrome,intensity*exp(-k_decay*t)*cos(theta),p2-d4-w2-c1,2,4,2,1,0,0,0,v3
+human-syn,sound-taste sigmoid of log-freq,1/(1 + exp(freq_pivot)/freq),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+human-syn,lexical-gustatory phoneme-taste sigmoid,1/(1 + exp(-amp*sin(2*pi*freq*t))),p3-d6-w1-c1,3,6,1,1,0,1,0,v3
+human-syn,spatial-sequence number-line distance,exp(-d*k_decay)*Abs(x - y),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+human-syn,mirror-touch synesthesia,intensity*exp(-d*k_decay)*cos(omega*t),p2-d5-w2-c1,2,5,2,1,0,0,0,v3
+bat,echo distance c*dt/2,c_sound*delta_t/2,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+bat,Doppler return-frequency ratio,freq*(c_sound + v_speed)/(c_sound - v_speed),p0-d4-w0-c0,0,4,0,0,0,0,0,v3
+bat,sonar-smell integration v*exp(-k*d),v_speed*exp(-d*k_decay),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+bat,constant-frequency echo intensity,intensity*exp(-alpha_w*d)/d**2,p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+bat,FM chirp call frequency sweep,freq*(alpha_w*t + 1),p0-d3-w0-c0,0,3,0,0,0,0,0,v3
+ai-multi,embedding cosine similarity,dot_xy/(sqrt(norm_x)*sqrt(norm_y)),p1-d2-w2-c0,1,2,2,0,0,0,0,v3
+ai-multi,adapter-gated fusion (linear),adapter + text_emb/(1 + exp(-emb_dim)),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+ai-multi,attention softmax over keys (toy),exp(dot_xy)/(exp(dot_xy) + exp(norm_x)),p1-d2-w2-c0,1,2,2,0,0,0,0,v3
+ai-multi,LayerNorm (toy),(-mu_x_old + x)/sqrt(eps_old + sigma_g**2),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+ai-multi,GELU (toy),x*(erf(sqrt(2)*x/2) + 1)/2,p3-d5-w1-c0,3,5,1,0,0,0,1,v3
+ai-multi,RMSNorm (toy),x/sqrt(eps2 + ms),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+plant,phototropin Lambertian I*cos(theta),intensity*cos(theta),p2-d4-w1-c1,2,4,1,1,0,0,0,v3
+plant,green-leaf volatile release (saturating),V_max*(1 - exp(-alpha_w*intensity)),p1-d5-w1-c0,1,5,1,0,0,0,0,v3
+plant,circadian clock cosine entrainment,intensity*cos(pi*t/12),p2-d5-w1-c1,2,5,1,1,0,0,0,v3
+plant,stomatal aperture sigmoid CO2 response,1/(exp(-c_conc + c_pivot) + 1),p1-d3-w1-c0,1,3,1,0,0,1,0,v3
+plant,phototropic curvature integral,"gradient*Integral(intensity, t)",p0-d3-w0-c0,0,3,0,0,0,0,0,v3
+physics,Hawking temperature T_H,c_light**3*hbar/(8*pi*G_grav*M_mass*k_B),p0-d2-w0-c0,0,2,0,0,0,0,0,v3
+physics,neutrino oscillation P(alpha->beta),sin(2*theta_mix)**2*sin(L_path*delta_m_sq/(4*E_energy))**2,p2-d7-w2-c1,2,7,2,1,0,0,0,v3
+physics,Planck spectral radiance,2*c_light**2*hbar/(lam**5*(exp(c_light*hbar/(T_temp*k_B*lam)) - 1)),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+physics,Bose-Einstein occupation,1/(exp(E_energy/(T_temp*k_B)) - 1),p1-d3-w1-c0,1,3,1,0,0,1,0,v3
+physics,Fermi-Dirac occupation,1/(exp(E_energy/(T_temp*k_B)) + 1),p1-d3-w1-c0,1,3,1,0,0,1,0,v3
+physics,Wien displacement (peak wavelength),b_w/T_temp,p0-d2-w0-c0,0,2,0,0,0,0,0,v3
+octopus,skin opsin response (Gaussian),exp(-(lam - mu_g)**2/(2*sigma_g**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v3
+octopus,chromatophore expansion sigmoid,1/(1 + exp(-chromatophore_signal)),p1-d1-w1-c0,1,1,1,0,0,1,0,v3
+octopus,skin-vision integration,opsin_response/(1 + exp(-chromatophore_signal)),p1-d2-w1-c0,1,2,1,0,0,0,0,v3
+octopus,color-changing camouflage time response,V_max*(1 - exp(-alpha_w*t)),p1-d5-w1-c0,1,5,1,0,0,0,0,v3
+octopus,iridophore reflectance (Bragg-like cosine),cos(2*pi*d/lam),p2-d5-w0-c1,2,5,0,1,0,0,0,v3
+slime-mold,chemoattractant exponential gradient,c_conc*exp(-d*k_decay),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+slime-mold,ATP-driven oscillator (limit cycle),amp*cos(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v3
+slime-mold,tubular network optimal-path Hill kernel,gradient**nh/(Kh**nh + gradient**nh),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+slime-mold,swarm-velocity gradient response,gradient*v_speed*exp(-d*k_decay),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+fish-lat,neuromast velocity-pressure response,P_pressure*v_speed/rho_water,p0-d2-w0-c0,0,2,0,0,0,0,0,v3
+fish-lat,hair cell deflection sigmoid,1/(1 + exp(-amp*sin(2*pi*freq_lateral*t))),p3-d6-w1-c1,3,6,1,1,0,1,0,v3
+fish-lat,flow-direction cosine response,v_speed*cos(theta),p2-d4-w1-c1,2,4,1,1,0,0,0,v3
+fish-lat,wave-front time-of-arrival difference,delta_t + d/c_sound,p0-d3-w0-c0,0,3,0,0,0,0,0,v3
+fish-lat,schooling neighbour distance Gaussian,exp(-d**2/(2*sigma_g**2)),p1-d3-w0-c0,1,3,0,0,0,0,0,v3
+prokaryote-chem,Hill activation (cooperative ligand binding),ligand**n_hill/(K_a**n_hill + ligand**n_hill),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+prokaryote-chem,MWC two-state activity,(1 + ligand/K_a)**N_receptors/((1 + ligand/K_a)**N_receptors + (1 + ligand/(K_a*c_mwc))**N_receptors),p1-d7-w1-c0,1,7,1,0,0,0,0,v3
+prokaryote-chem,methylation feedback exponential adaptation,methyl*exp(-k_decay*t),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+prokaryote-chem,CheY-P phosphorylation steady state,k_phos*methyl/(k_dephos + k_phos),p0-d3-w0-c0,0,3,0,0,0,0,0,v3
+prokaryote-chem,tumble bias sigmoid of CheY-P,1/(1 + exp(-amp*(chey_p - chey_pivot))),p1-d4-w1-c0,1,4,1,0,0,1,0,v3
+cnidarian,hair cell deflection threshold sigmoid,1/(1 + exp(-amp*(deflection - threshold_v))),p1-d4-w1-c0,1,4,1,0,0,1,0,v3
+cnidarian,Ca2+ influx exponential decay,ca_influx*exp(-k_decay*t),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+cnidarian,osmotic discharge pressure,osmotic_p*(1 - exp(-alpha_w*t)),p1-d5-w1-c0,1,5,1,0,0,0,0,v3
+cnidarian,discharge time piecewise cosine impulse,amp*cos(discharge_t*omega),p2-d5-w1-c1,2,5,1,1,0,0,0,v3
+cnidarian,envenomation depth Gaussian,V_max*exp(-d**2/(2*sigma_g**2)),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+mycorrhizal,Michaelis-Menten P uptake,P_conc*V_uptake/(K_m + P_conc),p0-d3-w0-c0,0,3,0,0,0,0,0,v3
+mycorrhizal,diffusion-limited transport (Fick),D_diff*gradient,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+mycorrhizal,carbon-phosphate exchange ratio sigmoid,1/(1 + exp(-amp*(-c_pivot2 + carbon_flux))),p1-d4-w1-c0,1,4,1,0,0,1,0,v3
+mycorrhizal,hyphal extension rate (saturating),V_max*(1 - exp(-P_conc*alpha_w)),p1-d5-w1-c0,1,5,1,0,0,0,0,v3
+mycorrhizal,symbiotic exchange Hill cooperativity,P_conc**n_hill/(K_m**n_hill + P_conc**n_hill),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+tardigrade,trehalose Boltzmann sigmoid,1/(exp((E_b - hydration)/(T_boltz*k_B)) + 1),p1-d4-w1-c0,1,4,1,0,0,1,0,v3
+tardigrade,LEA protein cooperative hydration,hydration**n_hill/(K_lea**n_hill + hydration**n_hill),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+tardigrade,anhydrobiosis recovery exponential,V_max*(1 - exp(-alpha_w*recovery_t)),p1-d5-w1-c0,1,5,1,0,0,0,0,v3
+tardigrade,trehalose protective shell Gaussian,exp(-(-treh_opt + trehalose)**2/(2*sigma_g**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v3
+tardigrade,dehydration metabolic rate decay,V_max*exp(-k_decay*(1 - hydration)),p1-d5-w1-c0,1,5,1,0,0,0,0,v3
+gravitropism,statolith sedimentation velocity (Stokes),d**2*g_grav*rho_diff/eta_visc,p0-d2-w0-c0,0,2,0,0,0,0,0,v3
+gravitropism,auxin lateral redistribution sigmoid,auxin/(1 + exp(-amp*sin(psi_angle))),p3-d6-w1-c0,3,6,1,0,0,0,0,v3
+gravitropism,Cholodny-Went curvature angle response,curvature*cos(psi_angle),p2-d4-w1-c1,2,4,1,1,0,0,0,v3
+gravitropism,PIN protein polarity exponential decay,auxin*exp(-k_decay*t),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+gravitropism,root cap statolith threshold Gaussian,exp(-statolith_v**2/(2*sigma_g**2)),p1-d3-w0-c0,1,3,0,0,0,0,0,v3
+ai-multi-tx,Transformer LayerNorm,(-mu_x + x)/sqrt(eps_ln + sigma_x**2),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+ai-multi-tx,Transformer Q projection,Wq*x,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+ai-multi-tx,Transformer K projection,Wk*x,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+ai-multi-tx,Transformer V projection,Wv*x,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+ai-multi-tx,Transformer scaled dot-product,Wk*Wq*x**2/sqrt(d_head),p1-d2-w1-c0,1,2,1,0,0,0,0,v3
+ai-multi-tx,Transformer attention softmax (one entry),exp(Wk*Wq*x**2/sqrt(d_head))/(exp(key_norm) + exp(Wk*Wq*x**2/sqrt(d_head))),p2-d4-w2-c0,2,4,2,0,0,0,0,v3
+ai-multi-tx,Transformer attention output (one head),Wv*x*exp(Wk*Wq*x**2/sqrt(d_head))/(exp(key_norm) + exp(Wk*Wq*x**2/sqrt(d_head))),p2-d4-w2-c0,2,4,2,0,0,0,0,v3
+ai-multi-tx,Transformer GELU exact,x*(erf(sqrt(2)*x/2) + 1)/2,p3-d5-w1-c0,3,5,1,0,0,0,1,v3
+ai-multi-tx,Transformer FFN inner GELU,(W1*x/2 + b1/2)*(erf(sqrt(2)*(W1*x + b1)/2) + 1),p3-d6-w1-c0,3,6,1,0,0,0,1,v3
+ai-multi-tx,Transformer FFN full output,W2*(W1*x/2 + b1/2)*(erf(sqrt(2)*(W1*x + b1)/2) + 1) + b2,p3-d7-w1-c0,3,7,1,0,0,0,1,v3
+ai-multi-tx,Transformer residual after attention,(Wv*x*exp(Wk*Wq*x**2/sqrt(d_head))/(exp(key_norm) + exp(Wk*Wq*x**2/sqrt(d_head))) - mu_x + x)/sqrt(eps_ln + sigma_x**2),p2-d6-w2-c0,2,6,2,0,0,0,0,v3
+RANDOM,random #1,intensity,p0-d0-w0-c0,0,0,0,0,0,0,0,v3
+RANDOM,random #2,tanh((lam + 1)/(1/100 - gradient)),p1-d5-w0-c0,1,5,0,0,0,0,0,v3
+RANDOM,random #3,-V_max/((1/100 + 1/(exp(5 - gradient) + 1))*(intensity + 1/100)),p1-d5-w1-c0,1,5,1,0,0,0,0,v3
+RANDOM,random #4,tanh(tanh(V_max**3)),p2-d3-w0-c0,2,3,0,0,0,0,0,v3
+RANDOM,random #5,exp(y)/(t + 1/100),p1-d3-w1-c0,1,3,1,0,0,0,0,v3
+RANDOM,random #6,exp(-omega**4/2),p1-d3-w0-c0,1,3,0,0,0,0,0,v3
+RANDOM,random #7,log(alpha_w + 1),p1-d2-w0-c0,1,2,0,0,0,0,0,v3
+RANDOM,random #8,alpha_w**2,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+RANDOM,random #9,(exp(theta) - cos(x))*cos(sin(alpha_w)),p4-d7-w2-c2,4,7,2,2,0,0,0,v3
+RANDOM,random #10,x/(30401/40100 - c_conc),p0-d4-w0-c0,0,4,0,0,0,0,0,v3
+RANDOM,random #11,freq,p0-d0-w0-c0,0,0,0,0,0,0,0,v3
+RANDOM,random #12,omega,p0-d0-w0-c0,0,0,0,0,0,0,0,v3
+RANDOM,random #13,tanh(sqrt(intensity + 501/100)),p2-d3-w0-c0,2,3,0,0,0,0,0,v3
+RANDOM,random #14,lam/(t + 1/100),p0-d3-w0-c0,0,3,0,0,0,0,0,v3
+RANDOM,random #15,1/(1 + exp(-exp(-tanh(amp)**2/2))),p3-d5-w1-c0,3,5,1,0,0,1,0,v3
+RANDOM,random #16,-d + 1/(1 + exp(-tanh(y))),p2-d3-w1-c0,2,3,1,0,0,0,0,v3
+RANDOM,random #17,2*alpha_w + k_decay + sqrt(c_conc + 1/100)/(lam + 1/100),p1-d4-w1-c0,1,4,1,0,0,0,0,v3
+RANDOM,random #18,-omega**3*cos(t),p2-d4-w1-c1,2,4,1,1,0,0,0,v3
+RANDOM,random #19,y + exp(-cos(d)**2/2),p3-d7-w1-c1,3,7,1,1,0,0,0,v3
+RANDOM,random #20,gradient,p0-d0-w0-c0,0,0,0,0,0,0,0,v3
+RANDOM,random #21,exp(d),p1-d1-w0-c0,1,1,0,0,0,0,0,v3
+RANDOM,random #22,1/(1 + exp(-gradient)),p1-d1-w1-c0,1,1,1,0,0,1,0,v3
+RANDOM,random #23,1/(1 + exp(-sin(k_decay))),p3-d4-w1-c1,3,4,1,1,0,1,0,v3
+RANDOM,random #24,1/(1 + exp(-1/(1 + exp(-sin(amp))))),p4-d5-w1-c1,4,5,1,1,0,2,0,v3
+RANDOM,random #25,exp(lam),p1-d1-w0-c0,1,1,0,0,0,0,0,v3
+RANDOM,random #26,Abs(theta) + 1,p0-d2-w0-c0,0,2,0,0,0,0,0,v3
+RANDOM,random #27,sin(cos(2*d)),p4-d7-w0-c2,4,7,0,2,0,0,0,v3
+RANDOM,random #28,sin(log(Abs(gradient) + 1)),p3-d6-w0-c1,3,6,0,1,0,0,0,v3
+RANDOM,random #29,lam,p0-d0-w0-c0,0,0,0,0,0,0,0,v3
+RANDOM,random #30,cos(tanh(alpha_w)) - exp(-81/2),p3-d5-w2-c1,3,5,2,1,0,0,0,v3
+RANDOM,random #31,log(t + 1),p1-d2-w0-c0,1,2,0,0,0,0,0,v3
+RANDOM,random #32,sqrt(lam + 1/100),p1-d2-w0-c0,1,2,0,0,0,0,0,v3
+RANDOM,random #33,sqrt(alpha_w**3 + 1/100),p1-d3-w0-c0,1,3,0,0,0,0,0,v3
+RANDOM,random #34,k_decay,p0-d0-w0-c0,0,0,0,0,0,0,0,v3
+RANDOM,random #35,-theta,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+RANDOM,random #36,1/(exp(-alpha_w + y) + 1),p1-d3-w1-c0,1,3,1,0,0,1,0,v3
+RANDOM,random #37,-amp,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+RANDOM,random #38,-V_max,p0-d1-w0-c0,0,1,0,0,0,0,0,v3
+RANDOM,random #39,1/(1 + exp(-k_decay)),p1-d1-w1-c0,1,1,1,0,0,1,0,v3
+RANDOM,random #40,(1 - y)**3*cos(intensity),p2-d4-w1-c1,2,4,1,1,0,0,0,v3
+RANDOM,random #41,sqrt(1/100 + 1/(exp(k_decay - 2) + 1)),p2-d4-w1-c0,2,4,1,0,0,0,0,v3
+RANDOM,random #42,(y + log(Abs(gradient) + 1) + 5)/(1 + exp(-alpha_w)),p1-d5-w2-c0,1,5,2,0,0,0,0,v3
+RANDOM,random #43,cos(sin(sqrt(amp + 1/100))),p5-d8-w0-c2,5,8,0,2,0,0,0,v3
+RANDOM,random #44,alpha_w,p0-d0-w0-c0,0,0,0,0,0,0,0,v3
+RANDOM,random #45,sqrt(omega*Abs(gradient) + 1/100),p1-d4-w0-c0,1,4,0,0,0,0,0,v3
+RANDOM,random #46,tanh(alpha_w),p1-d1-w0-c0,1,1,0,0,0,0,0,v3
+RANDOM,random #47,sin(tanh(1/(1 + exp(-y)))),p4-d5-w1-c1,4,5,1,1,0,0,0,v3
+RANDOM,random #48,amp,p0-d0-w0-c0,0,0,0,0,0,0,0,v3
+RANDOM,random #49,sin(cos(gradient - 5)),p4-d7-w0-c2,4,7,0,2,0,0,0,v3
+RANDOM,random #50,cos(125),p2-d3-w0-c1,2,3,0,1,0,0,0,v3
+cardiac,action-potential pacemaker cosine,A_ap*cos(2*pi*t/T_cycle),p2-d6-w1-c1,2,6,1,1,0,0,0,v5
+cardiac,sinoatrial LC resonance frequency,1/(2*pi*sqrt(C_cap)*sqrt(L_ind)),p1-d2-w2-c0,1,2,2,0,0,0,0,v5
+cardiac,HRV exponential decay,exp(-t/tau_hrv),p1-d3-w0-c0,1,3,0,0,0,0,0,v5
+cardiac,QRS Gaussian peak,exp(-(t - t_peak)**2/(2*sigma_qrs**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v5
+respiratory,pre-Botzinger rhythm cosine,amp*cos(omega_resp*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v5
+respiratory,tidal volume sinusoid,V_T*sin(omega_breath*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v5
+respiratory,lung compliance pressure-volume decay,V_T*exp(-P_aw/tau_compl),p1-d4-w1-c0,1,4,1,0,0,0,0,v5
+respiratory,alveolar gas exchange saturation,1 - exp(-k_gas*t),p1-d4-w1-c0,1,4,1,0,0,0,0,v5
+eeg,alpha-band oscillator (8-13 Hz),A_alpha*cos(2*pi*f_alpha*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v5
+eeg,beta-band oscillator (13-30 Hz),A_beta*cos(2*pi*f_beta*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v5
+eeg,gamma-band oscillator (30-100 Hz),A_gamma*cos(2*pi*f_gamma*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v5
+eeg,membrane potential RC decay,V_m*exp(-t/tau_m),p1-d4-w1-c0,1,4,1,0,0,0,0,v5
+physics-osc,pendulum small-angle theta(t),theta0*cos(sqrt(g_grav)*t/sqrt(L_pend)),p3-d6-w2-c1,3,6,2,1,0,0,0,v6
+physics-osc,spring SHO position x(t),x0*cos(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v6
+physics-osc,RC AC voltage V(t),V0*sin(omega_AC*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v6
+physics-osc,planetary mean-anomaly sin term,e_eccent*sin(M_anom),p2-d4-w1-c1,2,4,1,1,0,0,0,v6
+physics-osc,vocal fold vibration,A_vfold*cos(omega_vfold*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v6
+physics-osc,kinetic energy (control),V0**2*m_mass/2,p0-d2-w0-c0,0,2,0,0,0,0,0,v6
+physics-osc,RC time constant decay (control),V0*exp(-t/(C_cap*R_res)),p1-d4-w1-c0,1,4,1,0,0,0,0,v6
+physics-osc,Newton gravitation 1/r^2 (control),g_grav*m_mass/L_pend**2,p0-d2-w0-c0,0,2,0,0,0,0,0,v6
+physics-osc,kinetic friction force (control),g_grav*m_mass*mu_kin,p0-d1-w0-c0,0,1,0,0,0,0,0,v6
+physics-osc,Hooke's law restoring force (control),k_spring*x0,p0-d1-w0-c0,0,1,0,0,0,0,0,v6
+engineering-osc,PLL VCO output,A_PLL*cos(omega_PLL*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v6
+engineering-osc,FM carrier (no modulation),A_FM*cos(omega_FM*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v6
+engineering-osc,AM carrier (envelope = 1),A_AM*cos(omega_AM*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v6
+engineering-osc,Wien-bridge op-amp output,A_Wien*sin(omega_Wien*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v6
+engineering-osc,crystal resonator output,A_xtal*sin(omega_xtal*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v6
+engineering-osc,PLL open-loop gain (control),A_loop*R_open/N_div,p0-d2-w0-c0,0,2,0,0,0,0,0,v6
+engineering-osc,SNR ratio (control),S_pwr/N_noise,p0-d2-w0-c0,0,2,0,0,0,0,0,v6
+engineering-osc,low-pass filter exp settling (control),V0*(1 - exp(-t/tau_filter)),p1-d6-w1-c0,1,6,1,0,0,0,0,v6
+engineering-osc,Q-factor amplitude rolloff (control),A_xtal/Q_factor,p0-d2-w0-c0,0,2,0,0,0,0,0,v6
+engineering-osc,FM modulation index (control),beta_FM*omega_FM/omega_AM,p0-d2-w0-c0,0,2,0,0,0,0,0,v6
+slime-mold-v7,Ca2+ oscillation,A_ca*cos(omega_ca*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v7
+slime-mold-v7,peristaltic wave,-A_per*sin(k_per*x - omega_per*t),p2-d6-w1-c1,2,6,1,1,0,0,0,v7
+slime-mold-v7,foraging Hill-kernel gradient response,gradient**n_hill/(K_h**n_hill + gradient**n_hill),p1-d4-w1-c0,1,4,1,0,0,0,0,v7
+slime-mold-v7,Kuramoto-coupled-tube phase coupling,J_coup*sin(theta_a - theta_b),p2-d6-w1-c1,2,6,1,1,0,0,0,v7
+slime-mold-v7,decision pulse damped cosine,A_dec*exp(-t/tau_dec)*cos(omega_dec*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v7
+avian-syn,UV cone Gaussian,exp(-(lam - mu_uv)**2/(2*sigma_uv**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v7
+avian-syn,octanal olfaction Hill,octanal**n_hill/(K_o**n_hill + octanal**n_hill),p1-d4-w1-c0,1,4,1,0,0,0,0,v7
+avian-syn,pallium multimodal product,olfaction*visual_input,p0-d1-w0-c0,0,1,0,0,0,0,0,v7
+avian-syn,color-smell synesthetic carrier,exp(-k_scent*scent_d)*cos(lam*omega_color),p2-d5-w2-c1,2,5,2,1,0,0,0,v7
+mycorrhizal,fungal action potential cosine,A_fung*cos(omega_fung*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v7
+mycorrhizal,nutrient pulse saturating exponential,V_max*(1 - exp(-k_nut*t)),p1-d5-w1-c0,1,5,1,0,0,0,0,v7
+mycorrhizal,Kuramoto-style network coupling,J_myc*cos(phi_myc),p2-d4-w1-c1,2,4,1,1,0,0,0,v7
+mycorrhizal,sugar transport sigmoid,1/(exp(K_sug - sugar_conc) + 1),p1-d3-w1-c0,1,3,1,0,0,1,0,v7
+plant-ap,Venus flytrap depolarization,V_trap*(1 - exp(-t/tau_trap))*cos(omega_trap*t),p2-d6-w1-c1,2,6,1,1,0,0,0,v7
+plant-ap,Mimosa pudica damped cosine fold,A_mim*exp(-t/tau_mim)*cos(omega_mim*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v7
+plant-ap,K+ efflux Nernst potential,-T_temp*log(K_in/K_out),p1-d4-w1-c0,1,4,1,0,0,0,0,v7
+plant-ap,spike-train exponential decay,A_spike*exp(-t/tau_spike),p1-d4-w1-c0,1,4,1,0,0,0,0,v7
+bacterial-qs,AHL quorum detection Hill,1/((K_qs/AHL)**n_hill + 1),p1-d5-w1-c0,1,5,1,0,0,0,0,v7
+bacterial-qs,AHL production rate (autoinducer feedback),R_max*(1 - 1/((qs/K_qs2)**n_hill + 1)),p1-d8-w1-c0,1,8,1,0,0,0,0,v7
+bacterial-qs,biofilm cosine wave,A_bio*cos(k_bio*x - omega_bio*t),p2-d6-w1-c1,2,6,1,1,0,0,0,v7
+bacterial-qs,Hopf bifurcation seed,mu_hopf*cos(omega_hopf*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v7
+ml-loss,MSE,(x - y)**2,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+ml-loss,MAE,Abs(x - y),p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+ml-loss,binary cross-entropy,-y*log(x) - (1 - y)*log(1 - x),p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+ml-loss,categorical cross-entropy,-log(x),p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+ml-loss,hinge loss,"Max(0, -x*y + 1)",p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+ml-loss,Huber loss,"Min((x - y)**2/2, Abs(x - y) - 1/2)",p0-d5-w0-c0,0,5,0,0,0,0,0,v8-new
+ml-loss,focal loss,-(1 - x)**2*log(x),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+ml-loss,KL divergence,x*log(x/y),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+ml-act,ReLU,x,p0-d0-w0-c0,0,0,0,0,0,0,0,v8-new
+ml-act,softplus,log(exp(x) + 1),p2-d1-w1-c0,2,1,1,0,0,1,0,v8-new
+ml-act,sigmoid,1/(1 + exp(-x)),p1-d1-w1-c0,1,1,1,0,0,1,0,v8-new
+ml-act,tanh,tanh(x),p1-d1-w0-c0,1,1,0,0,0,0,0,v8-new
+ml-act,GELU exact,x*(erf(sqrt(2)*x/2) + 1)/2,p3-d5-w1-c0,3,5,1,0,0,0,1,v8-new
+ml-act,swish,x/(1 + exp(-x)),p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+ml-act,ELU,x,p0-d0-w0-c0,0,0,0,0,0,0,0,v8-new
+ml-act,Mish,x*tanh(log(exp(x) + 1)),p3-d3-w1-c0,3,3,1,0,0,0,0,v8-new
+classical-mech,kinetic energy,m*v**2/2,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+classical-mech,Newton gravitation,G*M*m/r**2,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+classical-mech,pendulum potential,-g_grav*m*cos(x),p2-d4-w1-c1,2,4,1,1,0,0,0,v8-new
+classical-mech,damped harmonic,amp*exp(-beta_t*t)*cos(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v8-new
+classical-mech,Coriolis force magnitude,2*m*omega*v,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+classical-mech,centripetal force,m*v**2/r,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+classical-mech,rocket equation,v*log(M/m),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+classical-mech,Hamilton wave-action integral,E*t - p*x,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+thermo,Boltzmann factor,exp(-E/(T*k)),p1-d3-w0-c0,1,3,0,0,0,0,0,v8-new
+thermo,Maxwell-Boltzmann speed,v**2*exp(-m*v**2/(2*T*k)),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+thermo,Stefan-Boltzmann,T**4*sigma,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+thermo,Carnot efficiency,1 - T/E,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+thermo,ideal gas law,T*k*n,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+thermo,entropy of mixing,-k*(x*log(x) + (1 - x)*log(1 - x)),p1-d6-w1-c0,1,6,1,0,0,0,0,v8-new
+thermo,Gibbs free energy difference,E - S*T,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+thermo,vapor pressure Clausius-Clapeyron,exp(-E/(T*k)),p1-d3-w0-c0,1,3,0,0,0,0,0,v8-new
+em,Coulomb force,e_charge**2/(4*pi*eps_0*r**2),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+em,Larmor power,a**2*e_charge**2/(6*pi*c**3*eps_0),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+em,skin depth,sqrt(2)/(sqrt(mu_0)*sqrt(omega)*sqrt(sigma)),p1-d2-w4-c0,1,2,4,0,0,0,0,v8-new
+em,EM wave Poynting,c*e_charge*cos(k*x - omega*t),p2-d6-w1-c1,2,6,1,1,0,0,0,v8-new
+em,magnetic dipole moment,A*I*n,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+em,wavelength frequency,c/lam,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+em,RC charging,v*(1 - exp(-t/(C*r))),p1-d6-w1-c0,1,6,1,0,0,0,0,v8-new
+em,RLC oscillation,amp*exp(-beta_t*t)*sin(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v8-new
+fluid,Reynolds number,L*v/nu,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+fluid,Bernoulli,p + rho*v**2/2,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+fluid,Stokes drag,6*pi*nu*r*v,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+fluid,Poiseuille flow,pi*dp*r**4/(8*L*nu),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+fluid,Mach number squared,v**2/c**2,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+fluid,Kolmogorov scale,nu**(3/4)/eps_kol**(1/4),p1-d2-w2-c0,1,2,2,0,0,0,0,v8-new
+fluid,wave speed shallow,sqrt(g_grav)*sqrt(h),p1-d2-w2-c0,1,2,2,0,0,0,0,v8-new
+fluid,vortex tangential,Gamma/(2*pi*r),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+stats,Gaussian PDF,sqrt(2)*exp(-(-mu + x)**2/(2*sigma**2))/(2*sqrt(pi)*sigma),p1-d6-w3-c0,1,6,3,0,0,0,0,v8-new
+stats,exponential PDF,lam*exp(-lam*x),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+stats,Poisson PMF,lam**k*exp(-lam),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+stats,logistic CDF,1/(1 + exp(-x)),p1-d1-w1-c0,1,1,1,0,0,1,0,v8-new
+stats,Beta moment,a/(a + b),p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+stats,Cauchy PDF,1/(pi*(x**2 + 1)),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+stats,Gumbel PDF,exp(-x - exp(-x)),p2-d5-w1-c0,2,5,1,0,0,0,0,v8-new
+stats,Weibull PDF,k*x**(k - 1)*exp(-x**k),p2-d4-w1-c0,2,4,1,0,0,0,0,v8-new
+info,Shannon entropy term,-p*log(p),p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+info,binary entropy,-p*log(p) - (1 - p)*log(1 - p),p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+info,Renyi entropy term,log(p**a),p2-d2-w0-c0,2,2,0,0,0,0,0,v8-new
+info,Tsallis entropy term,(-p + p**q)/(1 - q),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+info,Fisher information element,1/(p*(1 - p)),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+info,channel capacity (binary),p*log(p) + (1 - p)*log(1 - p) + 1,p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+info,rate-distortion exp,exp(-D/R),p1-d3-w0-c0,1,3,0,0,0,0,0,v8-new
+info,Wasserstein 1D,Abs(x - y),p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+quantum,free-particle plane wave,exp(I*(k*x - omega*t)),p1-d4-w0-c0,1,4,0,0,0,0,0,v8-new
+quantum,Gaussian wavepacket,exp(-(-mu + x)**2/(2*sigma**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v8-new
+quantum,harmonic oscillator energy,hbar*omega*(n + 1/2),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+quantum,Bohr radius,hbar**2/(e_charge**2*m),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+quantum,Bose occupation,1/(exp(hbar*omega/(T*k)) - 1),p1-d3-w1-c0,1,3,1,0,0,1,0,v8-new
+quantum,Fermi occupation,1/(exp((E - mu)/(T*k)) + 1),p1-d4-w1-c0,1,4,1,0,0,1,0,v8-new
+quantum,tunneling exponential,exp(-kappa*x),p1-d2-w0-c0,1,2,0,0,0,0,0,v8-new
+quantum,Larmor precession,omega*cos(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v8-new
+econ,Cobb-Douglas,A*x**a*y**(1 - a),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+econ,CES production,(x**rho + y**rho)**(1/rho),p2-d3-w1-c0,2,3,1,0,0,0,0,v8-new
+econ,logistic growth,k/(1 + exp(-r*(t - t0))),p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+econ,Black-Scholes d1 form,(T*(r + sigma**2/2) + log(x/k))/(sqrt(T)*sigma),p1-d6-w1-c0,1,6,1,0,0,0,0,v8-new
+econ,demand elasticity exp,a*exp(-eta*x),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+econ,compound interest,p*exp(r*t),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+econ,Gini area integral,-2*A/B + 1,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+econ,Phillips curve,a - b*log(x),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+ecology,logistic carrying capacity,r*x*(1 - x/k),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+ecology,Lotka-Volterra prey,a*x - b*x*y,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+ecology,Holling type II,a*x/(h*x + 1),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+ecology,Allee effect,r*x*(-1 + x/A)*(1 - x/k),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+ecology,Ricker recruit,x*exp(r*(1 - x/k)),p1-d6-w1-c0,1,6,1,0,0,0,0,v8-new
+ecology,MacArthur diversity,"-Sum(p*log(p), (n, 1, S))",p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+ecology,Levins model patch,c*x*(1 - x) - e_ext*x,p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+ecology,May-Wigner stability,sqrt(C)*sqrt(S)*d,p1-d2-w2-c0,1,2,2,0,0,0,0,v8-new
+acoustics,harmonic series term,amp*cos(n*omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v8-new
+acoustics,wave equation phase,cos(k*x - omega*t),p2-d5-w0-c1,2,5,0,1,0,0,0,v8-new
+acoustics,decibel,10*log(p/p_ref),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+acoustics,Doppler shift,omega*(1 + v/c),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+acoustics,ADSR envelope,"Piecewise((t, a_env > t), (exp(-t/d_env), True))",p1-d5-w0-c0,1,5,0,0,0,0,0,v8-new
+acoustics,FM synthesis,amp*cos(beta_fm*sin(omega*t) + omega*t),p4-d10-w1-c2,4,10,1,2,0,0,0,v8-new
+acoustics,AM synthesis,amp*(cos(omega*t) + 1)*cos(2*omega*t),p2-d6-w1-c1,2,6,1,1,0,0,0,v8-new
+acoustics,string mode,amp*sin(pi*n*x/L),p2-d6-w1-c1,2,6,1,1,0,0,0,v8-new
+optics,Snell sin ratio,sin(x)/sin(y),p2-d5-w2-c1,2,5,2,1,0,0,0,v8-new
+optics,Fresnel reflectance s-polarization,(n - 1)**2/(n + 1)**2,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+optics,lens equation reciprocal,1/f - 1/d_o,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+optics,Rayleigh scattering,lam**(-4),p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+optics,Bragg condition,lam*n,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+optics,diffraction sinc,lam*sin(pi*a_dif*sin(x)/lam)/(pi*a_dif*sin(x)),p4-d8-w1-c2,4,8,1,2,0,0,0,v8-new
+optics,polarization Malus,cos(x)**2,p2-d4-w0-c1,2,4,0,1,0,0,0,v8-new
+optics,lens curvature,(n - 1)/R,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+network,degree distribution power-law,k**(-alpha_pl),p1-d2-w0-c0,1,2,0,0,0,0,0,v8-new
+network,clustering coefficient triangle,2*triangles/(k_n*(k_n - 1)),p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+network,PageRank update,(1 - d_pr)/n + d_pr*x/L,p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+network,small-world distance,log(n)/log(k_n),p1-d3-w2-c0,1,3,2,0,0,0,0,v8-new
+network,Erdos-Renyi edge probability,k/n,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+network,Kuramoto order parameter,cos(x - y),p2-d5-w0-c1,2,5,0,1,0,0,0,v8-new
+network,epidemic SIR β-term,beta_sir*x*y,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+network,Watts-Strogatz rewire prob,k_n*p_ws,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+crystal,Bragg's law,lam*n/(2*sin(x)),p2-d5-w1-c1,2,5,1,1,0,0,0,v8-new
+crystal,lattice plane spacing,a/sqrt(h**2 + kk**2 + l**2),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+crystal,Debye-Waller exp,exp(-Bw*sin(x)**2/lam**2),p3-d6-w1-c1,3,6,1,1,0,0,0,v8-new
+crystal,structure factor cos,cos(pi*(2*h*x + 2*kk*y + 2*l*z)),p2-d6-w0-c1,2,6,0,1,0,0,0,v8-new
+crystal,Madelung constant,"Sum(1/n, (n, 1, oo))",p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+crystal,phonon dispersion,2*J*sin(a*k/2),p2-d5-w1-c1,2,5,1,1,0,0,0,v8-new
+crystal,Brillouin zone vector,2*pi/a,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+crystal,form factor x-ray,exp(-Bw*x**2),p1-d3-w0-c0,1,3,0,0,0,0,0,v8-new
+numeric,Newton step,-f/fp + x,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+numeric,trapezoid rule term,h*(f0 + f1)/2,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+numeric,Simpson rule term,h*(f0 + 4*f1 + f2)/3,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+numeric,RK4 increment,k1/6 + k2/3 + k3/3 + k4/6,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+numeric,FFT twiddle,exp(-2*I*pi*k/n),p1-d3-w0-c0,1,3,0,0,0,0,0,v8-new
+numeric,convergence rate,C*h**p_conv,p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+numeric,Aitken acceleration,x - (-x + y)**2/(x - 2*y + z),p0-d5-w0-c0,0,5,0,0,0,0,0,v8-new
+numeric,Chebyshev polynomial T2,2*x**2 - 1,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+geom,circle area,pi*r**2,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geom,sphere volume,4*pi*r**3/3,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geom,great-circle distance,acos(sin(x)*sin(y)*cos(z) + cos(x)*cos(y)),p2-d6-w3-c1,2,6,3,1,0,0,0,v8-new
+geom,torus area,4*pi**2*R_t*r,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geom,Euler characteristic,F - m + n,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geom,Gauss-Bonnet integrand,K,p0-d0-w0-c0,0,0,0,0,0,0,0,v8-new
+geom,Pythagorean,sqrt(x**2 + y**2),p1-d3-w0-c0,1,3,0,0,0,0,0,v8-new
+geom,ellipse circumference approx,pi*(3*x + 3*y - sqrt(x + 3*y)*sqrt(3*x + y)),p1-d6-w1-c0,1,6,1,0,0,0,0,v8-new
+pharma,Michaelis-Menten,x*y/(k + x),p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+pharma,Hill equation,x**n/(k**n + x**n),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+pharma,first-order absorption,F*(1 - exp(-k*t)),p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+pharma,two-compartment exp,A1*exp(-la*t) + A2*exp(-lb*t),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+pharma,log-dose response,k*log(x),p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+pharma,EC50 sigmoid,1/((k/x)**n + 1),p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+pharma,Schild plot ratio,log(k/x - 1),p1-d4-w0-c0,1,4,0,0,0,0,0,v8-new
+pharma,competitive inhibition,x/(k*(y + 1) + x),p0-d5-w0-c0,0,5,0,0,0,0,0,v8-new
+geophys,Richter magnitude,log(a_seis),p1-d1-w0-c0,1,1,0,0,0,0,0,v8-new
+geophys,Gutenberg-Richter,a - b*x,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geophys,tidal force,2*G*M*r/d_tide**3,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geophys,buoyancy frequency squared,drho*g_grav/rho,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geophys,Rossby number,v/(L*omega),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geophys,geothermal gradient,Q/kapp,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+geophys,earthquake b-value rate,k*exp(-b*x),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+geophys,lapse rate exp,T*exp(-z/H),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+materials,Young's modulus stress,E*x,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+materials,Hooke linear,k*x,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+materials,Coffin-Manson fatigue,a/x**c,p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+materials,Arrhenius rate,A*exp(-E/(T*k)),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+materials,Larson-Miller parameter,T*(c_lm + log(t)),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+materials,creep strain,A*sig**n*t,p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+materials,Hall-Petch yield,sig0 + ky/sqrt(d_grain),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+materials,Poisson ratio,-x/y,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+astro,Schwarzschild radius,2*G*M/c**2,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+astro,Hubble distance,c*z/H0,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+astro,Chandrasekhar mass,M_chand,p0-d0-w0-c0,0,0,0,0,0,0,0,v8-new
+astro,Eddington luminosity,4*pi*G*M*c/kappa_e,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+astro,Roche limit,M**(1/3)*d_R/m**(1/3),p1-d2-w2-c0,1,2,2,0,0,0,0,v8-new
+astro,luminosity distance squared,E/(4*pi*F_flux),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+astro,redshift factor,z + 1,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+astro,Planck spectral radiance,2*c**2*hbar/(lam**5*(exp(c*hbar/(T*k*lam)) - 1)),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+control,Laplace exp decay,exp(-s*t),p1-d2-w0-c0,1,2,0,0,0,0,0,v8-new
+control,PID error,Kd*z + Ki*y + Kp*x,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+control,transfer function pole,1/(a + s),p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+control,PID frequency response,I*Kd*omega - I*Ki/omega + Kp,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+control,second-order step response,1 - exp(-omega*t*zeta)*cos(omega*t),p2-d6-w1-c1,2,6,1,1,0,0,0,v8-new
+control,Nyquist gain margin,1/G,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+control,phase margin,atan(omega/a),p1-d3-w0-c0,1,3,0,0,0,0,0,v8-new
+control,Bode magnitude (in dB) for first-order,20*log(Kp) - 20*log(sqrt(omega**2*tau**2 + 1)),p2-d7-w2-c0,2,7,2,0,0,0,0,v8-new
+vision,Gaussian filter 2D,exp((-x**2 - y**2)/(2*sigma**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,v8-new
+vision,Sobel x-derivative element,-2*x + 2*y,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+vision,histogram of gradients magnitude,sqrt(x**2 + y**2),p1-d3-w0-c0,1,3,0,0,0,0,0,v8-new
+vision,SSIM luminance term,2*mu*muy/(c1 + mu**2 + muy**2),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+vision,image entropy,-p_pix*log(p_pix),p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+vision,Hough vote line,x*cos(omega) + y*sin(omega),p2-d5-w1-c1,2,5,1,1,0,0,0,v8-new
+vision,PSNR formula,10*log(MAX**2/x),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+vision,RANSAC inlier prob,1 - (1 - p_inl)**k_ran,p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+rl,Bellman update,gamma*y + x,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+rl,softmax policy,exp(x)/(exp(x) + exp(y)),p1-d2-w2-c0,1,2,2,0,0,0,0,v8-new
+rl,TD error,gamma*x + r - y,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+rl,epsilon-greedy probability,eps_e,p0-d0-w0-c0,0,0,0,0,0,0,0,v8-new
+rl,Q-learning loss,(gamma*x + r - y)**2,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+rl,discounted return geometric,1/(1 - gamma),p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+rl,advantage,x - y,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+rl,policy gradient term,x*log(pi),p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+optim,gradient descent step,-eta*y + x,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+optim,momentum update,beta*x - eta*y,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+optim,Adam first-moment,beta1*x + y*(1 - beta1),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+optim,Adam bias correction,x/(1 - beta1**step),p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+optim,RMSprop second-moment,rho*x + y**2*(1 - rho),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+optim,natural-gradient direction,F_inv*y,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+optim,trust-region quadratic model,H_hess*x**2/2 + g_grad*x + y,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+optim,line-search Wolfe,c1*g_grad*x,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+cell-bio,Michaelis-Menten enzyme,Vmax*x/(Km + x),p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+cell-bio,Hodgkin-Huxley n-gating,alpha_n*(1 - x) - beta_n*x,p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+cell-bio,FitzHugh-Nagumo cubic,-x**3/3 + x - y,p0-d3-w0-c0,0,3,0,0,0,0,0,v8-new
+cell-bio,calcium oscillation cosine,amp*cos(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,v8-new
+cell-bio,diffusion 1D,D_diff*d2u/dx2,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+cell-bio,Goldman-Hodgkin-Katz,V_RT*log(x/y),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+cell-bio,ATP/ADP ratio,x/y,p0-d2-w0-c0,0,2,0,0,0,0,0,v8-new
+cell-bio,exponential growth,n*exp(r*t),p1-d3-w1-c0,1,3,1,0,0,0,0,v8-new
+chem,Arrhenius rate,A*exp(-Ea/(T*k)),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+chem,Nernst electrode potential,E0 + RT_F*log(x/y),p1-d5-w1-c0,1,5,1,0,0,0,0,v8-new
+chem,Beer-Lambert absorbance,L*c_conc*eps_bl,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+chem,Lennard-Jones,4*eps_lj*(-sig_lj**6/r**6 + sig_lj**12/r**12),p0-d4-w0-c0,0,4,0,0,0,0,0,v8-new
+chem,rate-constant k,A*exp(-Ea/(T*k)),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+chem,pH,-log(x),p1-d2-w1-c0,1,2,1,0,0,0,0,v8-new
+chem,Henderson-Hasselbalch,pKa + log(x/y),p1-d4-w1-c0,1,4,1,0,0,0,0,v8-new
+chem,second-order rate,k*x*y,p0-d1-w0-c0,0,1,0,0,0,0,0,v8-new
+noise,Perlin fade,6*t**5 - 15*t**4 + 10*t**3,p0-d3-w0-c0,0,3,0,0,0,0,0,E196_algorithmic
+noise,Smoothstep,3*t**2 - 2*t**3,p0-d3-w0-c0,0,3,0,0,0,0,0,E196_algorithmic
+noise,Smootherstep (Perlin),6*t**5 - 15*t**4 + 10*t**3,p0-d3-w0-c0,0,3,0,0,0,0,0,E196_algorithmic
+noise,Simplex kernel,(1 - t**2)**4,p0-d4-w0-c0,0,4,0,0,0,0,0,E196_algorithmic
+noise,1-octave sin,sin(omega*x),p2-d4-w0-c1,2,4,0,1,0,0,0,E196_algorithmic
+noise,2-octave fBm,sin(x) + sin(2*x)/2,p2-d6-w1-c1,2,6,1,1,0,0,0,E196_algorithmic
+noise,4-octave fBm,sin(x) + sin(2*x)/2 + sin(4*x)/4 + sin(8*x)/8,p2-d6-w1-c1,2,6,1,1,0,0,0,E196_algorithmic
+noise,8-octave fBm,sin(x) + sin(2*x)/2 + sin(4*x)/4 + sin(8*x)/8 + sin(16*x)/16 + sin(32*x)/32 + sin(64*x)/64 + sin(128*x)/128,p2-d6-w1-c1,2,6,1,1,0,0,0,E196_algorithmic
+noise,Damped noise envelope,exp(-lam*x)*sin(omega*x),p2-d5-w1-c1,2,5,1,1,0,0,0,E196_algorithmic
+noise,Worley/cellular distance (1D),sqrt((x - p)**2),p1-d4-w0-c0,1,4,0,0,0,0,0,E196_algorithmic
+crypto,RSA encryption (algebraic skeleton),m**e,p1-d1-w0-c0,1,1,0,0,0,0,0,E196_algorithmic
+crypto,Diffie-Hellman (algebraic skeleton),g**a,p1-d1-w0-c0,1,1,0,0,0,0,0,E196_algorithmic
+crypto,Elliptic curve Weierstrass form,x**3 + a*x + b,p0-d2-w0-c0,0,2,0,0,0,0,0,E196_algorithmic
+crypto,EC group law x3,((y2 - y1)/(x2 - x1))**2 - x1 - x2,p0-d5-w0-c0,0,5,0,0,0,0,0,E196_algorithmic
+crypto,EC group law y3,((y2 - y1)/(x2 - x1))*(x1 - x3) - y1,p0-d5-w0-c0,0,5,0,0,0,0,0,E196_algorithmic
+crypto,MurmurHash3 algebraic core,x*c,p0-d1-w0-c0,0,1,0,0,0,0,0,E196_algorithmic
+crypto,ECDSA signature s-value,(z + r*d)/k,p0-d3-w0-c0,0,3,0,0,0,0,0,E196_algorithmic
+crypto,Discrete log target,g**x,p1-d1-w0-c0,1,1,0,0,0,0,0,E196_algorithmic
+graph,PageRank single-vertex update (per-iteration),(1 - d)/Nv + d*PR_j/L_j,p0-d4-w0-c0,0,4,0,0,0,0,0,E196_algorithmic
+graph,"Softmax attention (single key, log-form)",exp(q*k/sqrt(d)),p2-d3-w1-c0,2,3,1,0,0,0,0,E196_algorithmic
+graph,Graph Laplacian eigenvalue characteristic,lam**2 - tr*lam + dt,p0-d2-w0-c0,0,2,0,0,0,0,0,E196_algorithmic
+graph,Dijkstra relaxation (continuous skeleton),d_u + w,p0-d1-w0-c0,0,1,0,0,0,0,0,E196_algorithmic
+graph,Network flow capacity inequality,f - c,p0-d2-w0-c0,0,2,0,0,0,0,0,E196_algorithmic
+graph,Watts-Strogatz clustering coefficient law,1/k,p0-d1-w0-c0,0,1,0,0,0,0,0,E196_algorithmic
+graph,Barabasi-Albert degree distribution,1/k**3,p0-d1-w0-c0,0,1,0,0,0,0,0,E196_algorithmic
+graph,Spectral radius (2x2 closed form),(tr + sqrt(tr**2 - 4*dt))/2,p1-d5-w1-c0,1,5,1,0,0,0,0,E196_algorithmic
+signal,DFT basis kernel (real part),cos(2*pi*k*n/Nlen),p2-d5-w0-c1,2,5,0,1,0,0,0,E196_algorithmic
+signal,Gaussian window,exp(-n**2/(2*sigma**2)),p1-d3-w0-c0,1,3,0,0,0,0,0,E196_algorithmic
+signal,Hann window,(1 - cos(2*pi*n/Nlen))/2,p2-d7-w1-c1,2,7,1,1,0,0,0,E196_algorithmic
+signal,Butterworth filter magnitude,1/sqrt(1 + (omega/omega_c)**(2*n)),p2-d5-w1-c0,2,5,1,0,0,0,0,E196_algorithmic
+signal,Chebyshev polynomial T_3,4*x**3 - 3*x,p0-d3-w0-c0,0,3,0,0,0,0,0,E196_algorithmic
+signal,Sinc function,sin(pi*x)/(pi*x),p2-d5-w1-c1,2,5,1,1,0,0,0,E196_algorithmic
+signal,Gabor wavelet,exp(-t**2/(2*sigma**2))*cos(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,E196_algorithmic
+signal,Morlet wavelet (real part),exp(-t**2/2)*cos(omega_0*t),p2-d5-w1-c1,2,5,1,1,0,0,0,E196_algorithmic
+signal,Kaiser window (PNE: Bessel I0),"besseli(0, bp*sqrt(1 - (2*n/Nlen - 1)**2))/besseli(0, bp)",p4-d10-w1-c0,4,10,1,0,0,0,1,E196_algorithmic
+signal,Mel scale,"2595*log(1 + f/700, 10)",p1-d4-w2-c0,1,4,2,0,0,0,0,E196_algorithmic
+numerical,Newton's method update,x - f/fprime,p0-d3-w0-c0,0,3,0,0,0,0,0,E196_algorithmic
+numerical,Euler ODE step,y + h*f,p0-d2-w0-c0,0,2,0,0,0,0,0,E196_algorithmic
+numerical,Runge-Kutta k1,h*f,p0-d1-w0-c0,0,1,0,0,0,0,0,E196_algorithmic
+numerical,Runge-Kutta k2 (skeleton),h*f_mid,p0-d1-w0-c0,0,1,0,0,0,0,0,E196_algorithmic
+numerical,Simpson's rule,h*(f_a + 4*f_m + f_b)/3,p0-d3-w0-c0,0,3,0,0,0,0,0,E196_algorithmic
+numerical,Gauss-Legendre weight (n=2 example),2/((1 - x**2)*(2*x)**2),p0-d5-w0-c0,0,5,0,0,0,0,0,E196_algorithmic
+numerical,Condition number proxy,norm_A*norm_Ainv,p0-d1-w0-c0,0,1,0,0,0,0,0,E196_algorithmic
+numerical,Central finite difference,(f_plus - f_minus)/(2*h),p0-d3-w0-c0,0,3,0,0,0,0,0,E196_algorithmic
+numerical,Lagrange basis polynomial (single term),(x - x_j)/(x_i - x_j),p0-d4-w0-c0,0,4,0,0,0,0,0,E196_algorithmic
+numerical,Cubic spline single-segment,a + b*(x - x_i) + c*(x - x_i)**2 + d*(x - x_i)**3,p0-d5-w0-c0,0,5,0,0,0,0,0,E196_algorithmic
+ml,Sigmoid,1/(1 + exp(-x)),p1-d1-w1-c0,1,1,1,0,0,1,0,E196_algorithmic
+ml,GELU exact,x*(1 + erf(x/sqrt(2)))/2,p3-d5-w1-c0,3,5,1,0,0,0,1,E196_algorithmic
+ml,ReLU (continuous skeleton),(x + sqrt(x**2))/2,p1-d4-w1-c0,1,4,1,0,0,0,0,E196_algorithmic
+ml,Cross-entropy single term,-y*log(p),p1-d2-w1-c0,1,2,1,0,0,0,0,E196_algorithmic
+ml,"Softmax (single output, two-class)",exp(x_i)/(exp(x_i) + exp(x_j)),p1-d2-w2-c0,1,2,2,0,0,0,0,E196_algorithmic
+ml,Adam update single dimension (no bias correction),m/(sqrt(v) + eps),p1-d4-w1-c0,1,4,1,0,0,0,0,E196_algorithmic
+ml,Batch norm (per-feature),(x - mu)/sqrt(sigma**2 + eps),p1-d4-w1-c0,1,4,1,0,0,0,0,E196_algorithmic
+ml,Layer norm (per-feature),(x - mu)/sigma * g + b,p0-d4-w0-c0,0,4,0,0,0,0,0,E196_algorithmic
+ml,Dropout inverse-scaling,x/(1 - p),p0-d4-w0-c0,0,4,0,0,0,0,0,E196_algorithmic
+ml,Exponential learning-rate decay,lr_0*exp(-lam*t),p1-d3-w1-c0,1,3,1,0,0,0,0,E196_algorithmic
+engineering_physics,Magnetic flux,B*A*cos(phi),p2-d4-w1-c1,2,4,1,1,0,0,0,E196_algorithmic
+engineering_physics,Faraday EMF,B*A*omega*sin(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,E196_algorithmic
+engineering_physics,Lorentz force magnitude,q*v*B*sin(phi),p2-d4-w1-c1,2,4,1,1,0,0,0,E196_algorithmic
+engineering_physics,Magnetic energy density,B**2/(2*mu_0),p0-d2-w0-c0,0,2,0,0,0,0,0,E196_algorithmic
+engineering_physics,Natural frequency,sqrt(k/m),p1-d3-w0-c0,1,3,0,0,0,0,0,E196_algorithmic
+engineering_physics,Damping ratio,c/(2*sqrt(k*m)),p1-d3-w1-c0,1,3,1,0,0,0,0,E196_algorithmic
+engineering_physics,Damped frequency,omega_n*sqrt(1 - Zd**2),p1-d5-w1-c0,1,5,1,0,0,0,0,E196_algorithmic
+engineering_physics,Damped harmonic oscillator,A*exp(-Zd*omega_n*t)*cos(omega_d*t),p2-d5-w1-c1,2,5,1,1,0,0,0,E196_algorithmic
+engineering_physics,Undamped harmonic oscillator,A*cos(omega_n*t),p2-d5-w1-c1,2,5,1,1,0,0,0,E196_algorithmic
+engineering_physics,FFT cosine basis,cos(2*pi*k_freq*n/Nlen),p2-d5-w0-c1,2,5,0,1,0,0,0,E196_algorithmic
+engineering_physics,Gaussian window,exp(-n**2/(2*sigma**2)),p1-d3-w0-c0,1,3,0,0,0,0,0,E196_algorithmic
+engineering_physics,Hann window,(1 - cos(2*pi*n/Nlen))/2,p2-d7-w1-c1,2,7,1,1,0,0,0,E196_algorithmic
+engineering_physics,Magnetometer period,2*pi*sqrt(Iner/(m_mag*B)),p1-d4-w1-c0,1,4,1,0,0,0,0,E196_algorithmic
+engineering_physics,Motor back-EMF,K*omega*sin(theta),p2-d4-w1-c1,2,4,1,1,0,0,0,E196_algorithmic
+engineering_physics,Coupled magneto-vibration,A*exp(-Zd*omega_n*t)*cos(omega_d*t) + (q*v*B/k)*sin(omega*t),p2-d6-w1-c1,2,6,1,1,0,0,0,E196_algorithmic
+robotics,PID P-term,Kp*e,p0-d1-w0-c0,0,1,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,PID D-term,Kd*de_dt,p0-d1-w0-c0,0,1,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,PID transfer function,Kd*s + Ki/s + Kp,p0-d3-w0-c0,0,3,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,PID step response,-(cos(omega_d*t) + omega_n*zeta*sin(omega_d*t)/omega_d)*exp(-omega_n*t*zeta) + 1,p2-d8-w1-c1,2,8,1,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,Overshoot,exp(-pi*zeta/sqrt(1 - zeta**2)),p2-d6-w1-c0,2,6,1,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Settling time,4/(omega_n*zeta),p0-d2-w0-c0,0,2,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Rotation cos,cos(theta),p2-d3-w0-c1,2,3,0,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,FK 2-link x,L1*cos(theta1) + L2*cos(theta1 + theta2),p2-d6-w1-c1,2,6,1,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,FK 2-link y,L1*sin(theta1) + L2*sin(theta1 + theta2),p2-d6-w1-c1,2,6,1,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,IK law of cosines,(-L1**2 - L2**2 + x_pos**2 + y_pos**2)/(2*L1*L2),p0-d4-w0-c0,0,4,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,IK theta2 via atan2,"atan2(sqrt(1 - (-L1**2 - L2**2 + x_pos**2 + y_pos**2)**2/(4*L1**2*L2**2)), (-L1**2 - L2**2 + x_pos**2 + y_pos**2)/(2*L1*L2))",p1-d8-w0-c0,1,8,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Jacobian determinant,L1*L2*sin(theta2),p2-d4-w1-c1,2,4,1,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,DH matrix element,sin(alpha_dh)*sin(theta),p2-d4-w2-c1,2,4,2,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,Quaternion q0,cos(theta/2),p2-d4-w0-c1,2,4,0,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,SLERP coefficient,sin(Omega*(1 - t_i))/sin(Omega),p2-d7-w1-c1,2,7,1,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,Kalman gain,P/(P + R),p0-d3-w0-c0,0,3,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Kalman update,K*(-H*x_old + z) + x_old,p0-d4-w0-c0,0,4,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Complementary filter,accel*(1 - alpha_cf) + alpha_cf*(dt*gyro + theta_est),p0-d4-w0-c0,0,4,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Gaussian noise PDF,sqrt(2)*exp(-x_n**2/(2*sigma_s**2))/(2*sqrt(pi)*sigma_s),p1-d4-w3-c0,1,4,3,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Cubic trajectory,a0 + a1*t + a2*t**2 + a3*t**3,p0-d3-w0-c0,0,3,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Minimum jerk,q0 + (-q0 + qf)*(10*t**3/T**3 - 15*t**4/T**4 + 6*t**5/T**5),p0-d5-w0-c0,0,5,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Repulsive potential,eta*(-1/d0 + 1/d)**2/d**2,p0-d5-w0-c0,0,5,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Quadratic cost,tau1**2 + tau2**2 + tau3**2,p0-d2-w0-c0,0,2,0,0,0,0,0,robotics_subdomain_2026_04_27
+robotics,Single joint torque,I*theta_ddot + b*theta_dot + g*l*m*sin(theta),p2-d5-w1-c1,2,5,1,1,0,0,0,robotics_subdomain_2026_04_27
+robotics,Gravity compensation,g*l*m*(sin(theta1) + sin(theta1 + theta2)),p2-d6-w1-c1,2,6,1,1,0,0,0,robotics_subdomain_2026_04_27
+human_body,Alpha wave,A*sin(phi + 20*pi*t),p2-d6-w1-c1,2,6,1,1,0,0,0,human_body_subdomain_2026_04_27
+human_body,Coupled alpha-theta,A1*sin(omega1*t) + A2*sin(omega2*t),p2-d6-w1-c1,2,6,1,1,0,0,0,human_body_subdomain_2026_04_27
+human_body,Phase-amplitude coupling,A*(m*sin(t*w_f) + 1)*sin(t*w_s),p2-d7-w1-c1,2,7,1,1,0,0,0,human_body_subdomain_2026_04_27
+human_body,EEG 1/f spectrum,A/f**alpha_exp,p1-d3-w1-c0,1,3,1,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Respiratory sinus arrhythmia,A*sin(2*pi*f_resp*t) + HR0,p2-d6-w1-c1,2,6,1,1,0,0,0,human_body_subdomain_2026_04_27
+human_body,Mean arterial pressure,2*DBP/3 + SBP/3,p0-d2-w0-c0,0,2,0,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Cardiac output,HR*SV,p0-d1-w0-c0,0,1,0,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Fick equation,HR*SV*(CaO2 - CvO2),p0-d3-w0-c0,0,3,0,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Windkessel decay,P0*exp(-t/(C_v*R_v)),p1-d4-w1-c0,1,4,1,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,ECG Gaussian pulse,A*exp(-t**2/(2*sigma_e**2)),p1-d4-w1-c0,1,4,1,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Harris-Benedict BMR,-5677*Age/1000 + 4799*H/1000 + 13397*W/1000 + 44181/500,p0-d2-w0-c0,0,2,0,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Michaelis-Menten enzyme,S*Vmax/(Km + S),p0-d3-w0-c0,0,3,0,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Arrhenius rate,A_arr*exp(-Ea/(R_g*T)),p1-d4-w1-c0,1,4,1,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Circadian Hill production,K**n_c*v1/(K**n_c + Z**n_c),p1-d4-w1-c0,1,4,1,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Circadian damped oscillator,A*exp(-lambda_c*t)*cos(pi*t/12),p2-d5-w1-c1,2,5,1,1,0,0,0,human_body_subdomain_2026_04_27
+human_body,HRV 3-rhythm superposition,A_c*sin(pi*t/43200) + A_h*sin(12*pi*t/5) + A_r*sin(pi*t/2),p2-d6-w1-c1,2,6,1,1,0,0,0,human_body_subdomain_2026_04_27
+human_body,Action potential,A*exp(-t/tau_m)*sin(omega*t) + V_rest,p2-d6-w1-c1,2,6,1,1,0,0,0,human_body_subdomain_2026_04_27
+human_body,STDP potentiation,A*exp(-dt/tau_plus),p1-d4-w1-c0,1,4,1,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Wilson-Cowan sigmoid,1/(1 + exp(-a_wc*(t - theta))),p1-d4-w1-c0,1,4,1,0,0,1,0,human_body_subdomain_2026_04_27
+human_body,Goldman equation,R_g2*T2*log((Ko*PK + Nao*PNa)/(Ki*PK + Nai*PNa))/F,p1-d6-w1-c0,1,6,1,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Nernst equation,R_g2*T2*log(ion_o/ion_i)/(F*z),p1-d4-w1-c0,1,4,1,0,0,0,0,human_body_subdomain_2026_04_27
+human_body,Logistic cell growth,K_cap/(1 + exp(-r_gr*(t - t0))),p1-d5-w1-c0,1,5,1,0,0,0,0,human_body_subdomain_2026_04_27
+music_sound,Pure tone,A*sin(2*pi*f*t + phi),p2-d6-w1-c1,2,6,1,1,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Period,1/f,p0-d1-w0-c0,0,1,0,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Traveling wave,A*sin(k*x - omega*t),p2-d6-w1-c1,2,6,1,1,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Standing wave,2*A*sin(k*x)*cos(omega*t),p2-d5-w2-c1,2,5,2,1,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,4 harmonics,A*sin(2*pi*f*t) + A*sin(4*pi*f*t)/2 + A*sin(6*pi*f*t)/3 + A*sin(8*pi*f*t)/4,p2-d6-w1-c1,2,6,1,1,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,8 harmonics,A*sin(2*pi*f*t) + A*sin(4*pi*f*t)/2 + A*sin(6*pi*f*t)/3 + A*sin(8*pi*f*t)/4 + A*sin(10*pi*f*t)/5 + A*sin(12*pi*f*t)/6 + A*sin(14*pi*f*t)/7 + A*sin(16*pi*f*t)/8,p2-d6-w1-c1,2,6,1,1,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Equal temperament,2**(n/12)*f_0,p1-d3-w1-c0,1,3,1,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Beat frequency,sin(pi*t*(f1 + f2))*cos(pi*t*(f1 - f2)),p2-d7-w1-c1,2,7,1,1,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Cents,1200*log(f2/f1)/log(2),p1-d4-w2-c0,1,4,2,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,MIDI to freq,440*2**(m/12 - 23/4),p1-d4-w1-c0,1,4,1,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Decibels,20*log(P/P_ref)/log(10),p1-d4-w2-c0,1,4,2,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Mel scale,2595*log(f/700 + 1)/log(10),p1-d4-w2-c0,1,4,2,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Bark scale,13*atan(19*f/25000) + 7*atan(f**2/56250000)/2,p1-d5-w1-c0,1,5,1,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Fletcher-Munson,f**2/10000000 + 20*log(P/P_ref)/log(10),p1-d5-w2-c0,1,5,2,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,ADSR attack,A*(1 - exp(-t/tau_a)),p1-d6-w1-c0,1,6,1,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,ADSR decay,A*(S + (1 - S)*exp(-t/tau_d)),p1-d6-w1-c0,1,6,1,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,FM synthesis,A*sin(I*sin(2*pi*f_m*t) + 2*pi*f_c*t),p4-d10-w1-c2,4,10,1,2,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Karplus-Strong damp,(1/2)**t,p1-d1-w0-c0,1,1,0,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Low-pass filter,1/(omega**2/omega_c**2 + 1),p0-d4-w0-c0,0,4,0,0,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Reverb,exp(-alpha*t)*sin(omega*t),p2-d5-w1-c1,2,5,1,1,0,0,0,music_sound_subdomain_2026_04_27
+music_sound,Sinc,sin(pi*x)/(pi*x),p2-d5-w1-c1,2,5,1,1,0,0,0,music_sound_subdomain_2026_04_27
+olfactory,Hill symbolic n,C**n*I_max/(C**n + K_half**n),p1-d4-w1-c0,1,4,1,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Hill n=2,C**2*I_max/(C**2 + K_half**2),p0-d4-w0-c0,0,4,0,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Michaelis-Menten,C*I_max/(C + K_half),p0-d3-w0-c0,0,3,0,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Euclidean mixture,sqrt(I1**2 + I2**2 + I3**2),p1-d3-w0-c0,1,3,0,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Cosine similarity,(a1*b1 + a2*b2)/(sqrt(a1**2 + a2**2)*sqrt(b1**2 + b2**2)),p1-d4-w2-c0,1,4,2,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Bond vibration freq,sqrt(k_bond)/(2*pi*sqrt(mu)),p1-d2-w2-c0,1,2,2,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Quantum tunneling,exp(-2*sqrt(2)*sqrt(E_b)*d*sqrt(m_e)/hbar),p2-d3-w3-c0,2,3,3,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Bose-Einstein factor,1/(exp(hbar*omega/(T*k_B)) - 1),p1-d3-w1-c0,1,3,1,0,0,1,0,olfactory_subdomain_2026_04_27
+olfactory,Lorentzian,gamma_l/(2*(gamma_l**2/4 + (omega - omega_0)**2)),p0-d7-w0-c0,0,7,0,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Firing frequency,f_max/((C_thresh/C)**n + 1),p1-d6-w1-c0,1,6,1,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,HH gating sigmoid,1/(exp((-V + V_half)/k_slope) + 1),p1-d4-w1-c0,1,4,1,0,0,1,0,olfactory_subdomain_2026_04_27
+olfactory,Receptor potential,V_max*(1 - exp(-t/tau))*exp(-t/tau_d),p1-d6-w1-c0,1,6,1,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Softmax 3-class,exp(x1)/(exp(x1) + exp(x2) + exp(x3)),p1-d4-w3-c0,1,4,3,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Gaussian kernel,exp(-(x - y)**2/(2*sigma**2)),p1-d5-w0-c0,1,5,0,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,RBF kernel,exp(-gamma_rbf*(x - y)**2),p1-d5-w0-c0,1,5,0,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Cross-entropy,-y*log(p),p1-d2-w1-c0,1,2,1,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Poincaré distance,acosh(2*d_uv**2/((1 - u_n**2)*(1 - v_n**2)) + 1),p1-d7-w0-c0,1,7,0,0,0,0,0,olfactory_subdomain_2026_04_27
+olfactory,Weber-Fechner,log(C2/C1),p1-d3-w0-c0,1,3,0,0,0,0,0,olfactory_subdomain_2026_04_27
+color_science,Frequency from wavelength,c/lambda,p0-d2-w0-c0,0,2,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Planck energy,h*nu,p0-d1-w0-c0,0,1,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Photon energy,c*h/lambda,p0-d2-w0-c0,0,2,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Planck radiation,2*h*nu**3/(c**2*(exp(h*nu/(T*k_B)) - 1)),p1-d4-w1-c0,1,4,1,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Wien displacement,b/T,p0-d2-w0-c0,0,2,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Stefan-Boltzmann,A*T**4*sigma_sb,p0-d2-w0-c0,0,2,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Beer-Lambert,I_0*exp(-L_path*alpha*c_conc),p1-d3-w1-c0,1,3,1,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Rayleigh scattering,lambda**(-4),p0-d1-w0-c0,0,1,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,CIE Gaussian single,a1*exp(-(lambda - mu1)**2/sigma1**2),p1-d6-w1-c0,1,6,1,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,CIE triple Gaussian,a1*exp(-(lambda - mu1)**2/sigma1**2) + a2*exp(-(lambda - mu2)**2/sigma2**2) + a3*exp(-(lambda - mu3)**2/sigma3**2),p1-d7-w1-c0,1,7,1,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Chromaticity x,X/(X + Y + Z),p0-d3-w0-c0,0,3,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Chromaticity y,Y/(X + Y + Z),p0-d3-w0-c0,0,3,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,XYZ integrand,2*a1*h*nu**3*exp(-(lambda - mu1)**2/sigma1**2)/(c**2*(exp(h*nu/(T*k_B)) - 1)),p1-d6-w2-c0,1,6,2,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,Gamma correction 2.2,V_in**(11/5),p1-d1-w0-c0,1,1,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,sRGB transfer 5/12,C_lin**(5/12),p1-d1-w0-c0,1,1,0,0,0,0,0,color_science_subdomain_2026_04_27
+color_science,HSL to R,L + S*cos(H),p2-d5-w1-c1,2,5,1,1,0,0,0,color_science_subdomain_2026_04_27
+color_science,HSL to G,L - S*cos(H + pi/3),p2-d7-w1-c1,2,7,1,1,0,0,0,color_science_subdomain_2026_04_27
+color_science,McCamy CCT polynomial,449*n_mc**3 + 3525*n_mc**2 + 68233*n_mc/10 + 552033/100,p0-d3-w0-c0,0,3,0,0,0,0,0,color_science_subdomain_2026_04_27
