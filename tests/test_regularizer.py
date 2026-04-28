@@ -124,6 +124,45 @@ class TestDynamicsPenalty:
 # ---------------------------------------------------------------------------
 
 
+class TestTwoSidedMode:
+    def test_target_match_zero_penalty(self) -> None:
+        # sin(x) has chain order 2; target=2 → no penalty.
+        cfg = RegularizerConfig(lambda_chain=1.0, target_chain_order=2)
+        r = regularize("sin(x)", cfg)
+        assert r.chain_penalty == 0.0
+        assert r.is_feasible is True
+
+    def test_undershoot_pays(self) -> None:
+        # x**2 has chain order 0; target=2 → penalty = 2.
+        cfg = RegularizerConfig(lambda_chain=1.0, target_chain_order=2)
+        r = regularize("x**2", cfg)
+        assert r.chain_penalty == pytest.approx(2.0)
+        assert r.is_feasible is False
+
+    def test_overshoot_pays(self) -> None:
+        cfg = RegularizerConfig(lambda_chain=1.0, target_chain_order=1)
+        r = regularize("sin(exp(cos(x)))", cfg)
+        assert r.chain_penalty > 0
+        assert r.is_feasible is False
+
+    def test_target_overrides_max_chain_order(self) -> None:
+        # sin(x) chain 2; max_chain_order would say feasible since 2 <= 5,
+        # but target=0 makes it infeasible (deviation 2).
+        cfg = RegularizerConfig(
+            lambda_chain=1.0,
+            max_chain_order=5,
+            target_chain_order=0,
+        )
+        r = regularize("sin(x)", cfg)
+        assert r.is_feasible is False
+        assert r.chain_penalty == pytest.approx(2.0)
+
+    def test_explanation_mentions_target(self) -> None:
+        cfg = RegularizerConfig(lambda_chain=1.0, target_chain_order=0)
+        r = regularize("sin(x)", cfg)
+        assert "target=0" in r.explanation
+
+
 class TestStabilityPenalty:
     def test_stability_zero_on_unsupported_family(self) -> None:
         # bessel — recommender abstains, no penalty.

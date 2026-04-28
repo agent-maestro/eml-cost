@@ -73,12 +73,24 @@ class RegularizerConfig:
     All four lambdas default to zero so the regularizer can be
     used as a pure feasibility check without any soft penalty.
 
+    The chain-order penalty operates in one of two modes:
+
+      - **One-sided (default):** ``penalty = lambda_chain *
+        max(0, chain_order - max_chain_order)``. Penalises
+        overshoot only; cannot prevent underfitting.
+
+      - **Two-sided:** activated when ``target_chain_order`` is
+        not ``None``. ``penalty = lambda_chain *
+        |chain_order - target_chain_order|``. Penalises both
+        directions. Use when an external estimator (e.g.
+        :func:`estimate_dynamics` on the regression target) gives
+        a structural target.
+
     Attributes
     ----------
     lambda_chain:
-        Weight on the chain-order excess (``max(0, chain_order -
-        max_chain_order)``). Positive values steer search toward
-        shallower transcendental nesting.
+        Weight on the chain-order term. Interpretation depends
+        on which mode is active.
     lambda_nodes:
         Weight on raw node count (``count_ops`` over the canonical
         form). Encourages parsimony.
@@ -92,9 +104,14 @@ class RegularizerConfig:
         form, the penalty is the predicted ``digits_saved`` (so
         an input form that is *worse* than the canonical pays).
     max_chain_order:
-        Soft constraint on chain order. Expressions with chain
-        order strictly greater than this are flagged
-        ``is_feasible=False``.
+        Soft constraint on chain order in **one-sided** mode.
+        Expressions with chain order strictly greater than this
+        are flagged ``is_feasible=False``. Ignored when
+        ``target_chain_order`` is set.
+    target_chain_order:
+        When non-``None``, switches the chain term to **two-sided**
+        absolute-deviation mode. ``is_feasible`` becomes
+        ``chain_order == target_chain_order``.
     expected_dynamics:
         Optional ``(n_oscillations, n_decays)`` tuple — the
         dynamics signature inferred from the regression target.
@@ -107,6 +124,7 @@ class RegularizerConfig:
     lambda_dynamics: float = 0.0
     lambda_stability: float = 0.0
     max_chain_order: int = 5
+    target_chain_order: Optional[int] = None
     expected_dynamics: Optional[tuple[int, int]] = None
 
 
@@ -211,9 +229,15 @@ def regularize(
     node_count = int(sp.count_ops(canonical))
     pred_dyn = _predicted_dynamics(result)
 
-    # Component 1: chain penalty (excess over the budget).
-    excess = max(0, chain_order - config.max_chain_order)
-    chain_penalty = float(config.lambda_chain * excess)
+    # Component 1: chain penalty.
+    # Two-sided mode (target_chain_order set) penalises absolute
+    # deviation; one-sided mode penalises overshoot only.
+    if config.target_chain_order is not None:
+        deviation = abs(chain_order - config.target_chain_order)
+        chain_penalty = float(config.lambda_chain * deviation)
+    else:
+        excess = max(0, chain_order - config.max_chain_order)
+        chain_penalty = float(config.lambda_chain * excess)
 
     # Component 2: parsimony / node count.
     node_penalty = float(config.lambda_nodes * node_count)
@@ -244,13 +268,21 @@ def regularize(
     total = (chain_penalty + node_penalty
              + dynamics_penalty + stability_penalty)
 
-    is_feasible = chain_order <= config.max_chain_order
+    if config.target_chain_order is not None:
+        is_feasible = chain_order == config.target_chain_order
+    else:
+        is_feasible = chain_order <= config.max_chain_order
 
     parts = []
     if chain_penalty:
-        parts.append(
-            f"chain={chain_penalty:.3f} (order={chain_order}, "
-            f"max={config.max_chain_order})")
+        if config.target_chain_order is not None:
+            parts.append(
+                f"chain={chain_penalty:.3f} (order={chain_order}, "
+                f"target={config.target_chain_order})")
+        else:
+            parts.append(
+                f"chain={chain_penalty:.3f} (order={chain_order}, "
+                f"max={config.max_chain_order})")
     if node_penalty:
         parts.append(f"nodes={node_penalty:.3f} (n={node_count})")
     if dynamics_penalty:

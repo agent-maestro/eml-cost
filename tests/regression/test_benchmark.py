@@ -29,7 +29,7 @@ class TestProblemRegistry:
 
 class TestRunBenchmarkTinyConfig:
     def test_runs_end_to_end(self) -> None:
-        # Smoke: 2 problems × 1 seed × tiny GP budget.
+        # Smoke: 2 problems × 1 seed × tiny GP budget × 4 conditions.
         problems = benchmark.FEYNMAN_PROBLEMS[:2]
         table = benchmark.run_benchmark(
             problems=problems,
@@ -38,7 +38,19 @@ class TestRunBenchmarkTinyConfig:
             n_generations=3,
         )
         assert len(table.rows) == 2
-        # 2 problems × 1 seed × 3 conditions = 6 runs.
+        # 2 problems × 1 seed × 4 conditions = 8 runs.
+        assert len(table.runs) == 8
+
+    def test_three_condition_mode(self) -> None:
+        # include_two_sided=False drops back to 3 conditions.
+        problems = benchmark.FEYNMAN_PROBLEMS[:2]
+        table = benchmark.run_benchmark(
+            problems=problems,
+            seeds=(0,),
+            population_size=15,
+            n_generations=2,
+            include_two_sided=False,
+        )
         assert len(table.runs) == 6
 
     def test_format_table_returns_markdown(self) -> None:

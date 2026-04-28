@@ -139,6 +139,7 @@ def _detect_oscillations(
     dx: float,
     *,
     min_power_ratio: float = 0.10,
+    min_peak_to_median: float = 20.0,
     max_modes: int = 4,
 ) -> tuple[list[float], float]:
     """Return ``(angular_frequencies, dominant_power_ratio)``.
@@ -146,6 +147,11 @@ def _detect_oscillations(
     A bin is accepted when its power exceeds ``min_power_ratio *
     peak_power``. Adjacent bins (within +/-1 of an already-accepted
     peak) are merged into the same mode.
+
+    A noise-floor gate: if the dominant peak's power is less than
+    ``min_peak_to_median`` times the median bin power, treat the
+    spectrum as noise and return zero modes. For a clean sinusoid
+    this ratio is huge; for white noise it is on the order of 5.
     """
     n = len(y)
     if n < 8:
@@ -171,6 +177,11 @@ def _detect_oscillations(
         return [], 0.0
 
     peak = power_ac.max()
+    median_pow = float(np.median(power_ac))
+    if median_pow > 0 and peak / median_pow < min_peak_to_median:
+        # Spectrum is essentially flat → noise, no real modes.
+        return [], 0.0
+
     threshold = min_power_ratio * peak
 
     # Accept bins above threshold, suppressing nearby duplicates so

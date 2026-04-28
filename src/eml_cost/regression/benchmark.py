@@ -1,16 +1,20 @@
 """Feynman-flavoured symbolic-regression benchmark.
 
 Ten well-known closed-form expressions spanning chain orders 0 to 3.
-Each problem is run three ways:
+Each problem is run four ways:
 
-  - **A** — EML GP **with** chain-order regularizer (lambda_chain > 0).
+  - **A** — EML GP with **one-sided** chain-order regularizer
+    (penalty above ``max_chain_order=3``).
   - **B** — EML GP **without** regularizer (lambda_chain = 0).
   - **C** — random-tree baseline (no evolution).
+  - **D** — EML GP with **two-sided** chain-order regularizer
+    (penalty on |chain - target|, target inferred via
+    :func:`estimate_dynamics`).
 
-The headline number is
+The headline numbers:
 
-    A's chain-order match rate vs B's — does the regularizer
-    measurably steer search toward the correct structural class?
+  - A vs B: does the one-sided regularizer steer search?
+  - D vs A: does targeting from data beat upper-bound-only?
 
 Usage
 -----
@@ -201,7 +205,11 @@ class BenchmarkRow:
     c_mean_mse: float
     c_chain_match_rate: float
     c_modal_chain: int
-    n_seeds: int
+    d_mean_mse: float = math.inf
+    d_chain_match_rate: float = 0.0
+    d_modal_chain: int = 0
+    d_mean_target: float = -1.0
+    n_seeds: int = 0
 
 
 @dataclass
@@ -220,6 +228,10 @@ class BenchmarkTable:
     @property
     def overall_c_chain_rate(self) -> float:
         return _hit_rate(self.runs, "C")
+
+    @property
+    def overall_d_chain_rate(self) -> float:
+        return _hit_rate(self.runs, "D")
 
 
 # ---------------------------------------------------------------------------
@@ -272,6 +284,36 @@ def _hit_rate(runs: list[ProblemRun], condition: str) -> float:
     return matched / total if total else 0.0
 
 
+def _make_config_two_sided(
+    seed: int,
+    target_chain_order: int,
+    *,
+    population_size: int,
+    n_generations: int,
+) -> GPConfig:
+    return GPConfig(
+        population_size=population_size,
+        n_generations=n_generations,
+        seed=seed,
+        regularizer=RegularizerConfig(
+            lambda_chain=1.0,
+            target_chain_order=target_chain_order,
+        ),
+        use_data_dynamics=True,
+    )
+
+
+def _infer_target_chain(x, y) -> int:
+    """Use estimate_dynamics(x, y) to derive a target chain order
+    for two-sided mode. Falls back to 0 on failure."""
+    try:
+        from ..data_analyzer import estimate_dynamics
+        d = estimate_dynamics(x, y)
+        return int(d.estimated_chain_order)
+    except Exception:  # noqa: BLE001
+        return 0
+
+
 def run_benchmark(
     problems: Optional[Sequence[FeynmanProblem]] = None,
     seeds: Sequence[int] = (1, 2, 3),
@@ -279,8 +321,9 @@ def run_benchmark(
     population_size: int = 80,
     n_generations: int = 30,
     progress: bool = False,
+    include_two_sided: bool = True,
 ) -> BenchmarkTable:
-    """Run the three-condition benchmark and return aggregate stats.
+    """Run the four-condition benchmark and return aggregate stats.
 
     Per problem and per seed:
 
@@ -288,14 +331,20 @@ def run_benchmark(
         max_chain_order=3)`` plus dynamics-aware initialisation.
       - **B** runs the same engine without any regularizer.
       - **C** samples random trees with a budget matched to A/B.
+      - **D** uses ``RegularizerConfig(lambda_chain=1.0,
+        target_chain_order=t)`` where ``t`` comes from
+        :func:`estimate_dynamics` on ``(x, y)``.
 
-    The seed is used identically across A and B so the only
+    Pass ``include_two_sided=False`` to run only A/B/C (3 conditions).
+
+    The seed is used identically across A, B, and D so the only
     differences come from regularization. C uses the same seed
     for sampling.
     """
     problems = list(problems) if problems is not None else FEYNMAN_PROBLEMS
 
     runs: list[ProblemRun] = []
+    targets_by_problem: dict[str, list[int]] = {}
 
     for prob in problems:
         if progress:
@@ -303,7 +352,7 @@ def run_benchmark(
         for seed in seeds:
             x, y = prob.sample(seed)
 
-            # A — with regularizer
+            # A — one-sided regularizer
             cfg_a = _make_config(
                 seed,
                 use_regularizer=True,
@@ -332,6 +381,19 @@ def run_benchmark(
             )
             runs.append(_to_run(prob.name, "C", seed, res_c))
 
+            # D — two-sided regularizer with target from data
+            if include_two_sided:
+                target = _infer_target_chain(x, y)
+                targets_by_problem.setdefault(
+                    prob.name, []).append(target)
+                cfg_d = _make_config_two_sided(
+                    seed, target,
+                    population_size=population_size,
+                    n_generations=n_generations,
+                )
+                res_d = search(x, y, var_names=["x"], config=cfg_d)
+                runs.append(_to_run(prob.name, "D", seed, res_d))
+
     rows = []
     for prob in problems:
         a_runs = [r for r in runs
@@ -340,6 +402,12 @@ def run_benchmark(
                   if r.problem == prob.name and r.condition == "B"]
         c_runs = [r for r in runs
                   if r.problem == prob.name and r.condition == "C"]
+        d_runs = [r for r in runs
+                  if r.problem == prob.name and r.condition == "D"]
+
+        d_targets = targets_by_problem.get(prob.name, [])
+        d_mean_target = (
+            sum(d_targets) / len(d_targets) if d_targets else -1.0)
 
         rows.append(BenchmarkRow(
             problem=prob.name,
@@ -353,6 +421,11 @@ def run_benchmark(
             c_mean_mse=_safe_mean(r.mse for r in c_runs),
             c_chain_match_rate=_match_rate(c_runs, prob.true_chain_order),
             c_modal_chain=_modal([r.chain_order for r in c_runs]),
+            d_mean_mse=_safe_mean(r.mse for r in d_runs),
+            d_chain_match_rate=_match_rate(d_runs, prob.true_chain_order),
+            d_modal_chain=(
+                _modal([r.chain_order for r in d_runs]) if d_runs else 0),
+            d_mean_target=d_mean_target,
             n_seeds=len(seeds),
         ))
 
@@ -394,13 +467,19 @@ def _match_rate(runs: list[ProblemRun], target: int) -> float:
 
 
 def format_table(table: BenchmarkTable) -> str:
-    """Render the per-problem results as a markdown table."""
+    """Render the per-problem results as a markdown table.
+
+    Includes condition D when any D-runs are present in the table.
+    """
+    has_d = any(r.condition == "D" for r in table.runs)
     headers = [
         "Problem", "True chain",
         "A chain", "A mse",
         "B chain", "B mse",
         "C chain", "C mse",
     ]
+    if has_d:
+        headers += ["D target", "D chain", "D mse"]
     lines = [
         "| " + " | ".join(headers) + " |",
         "|" + "|".join(["---"] * len(headers)) + "|",
@@ -409,20 +488,31 @@ def format_table(table: BenchmarkTable) -> str:
         a_mark = "OK" if row.a_modal_chain == row.true_chain_order else "X"
         b_mark = "OK" if row.b_modal_chain == row.true_chain_order else "X"
         c_mark = "OK" if row.c_modal_chain == row.true_chain_order else "X"
-        lines.append(
+        line = (
             f"| {row.problem} | {row.true_chain_order} | "
             f"{row.a_modal_chain} {a_mark} | {_fmt_mse(row.a_mean_mse)} | "
             f"{row.b_modal_chain} {b_mark} | {_fmt_mse(row.b_mean_mse)} | "
             f"{row.c_modal_chain} {c_mark} | {_fmt_mse(row.c_mean_mse)} |"
         )
+        if has_d:
+            d_mark = "OK" if row.d_modal_chain == row.true_chain_order else "X"
+            target = (f"{row.d_mean_target:.1f}"
+                      if row.d_mean_target >= 0 else "-")
+            line += (
+                f" {target} | {row.d_modal_chain} {d_mark} | "
+                f"{_fmt_mse(row.d_mean_mse)} |")
+        lines.append(line)
 
     lines.append("")
-    lines.append(
+    summary = (
         f"**Overall chain-order hit rate:** "
         f"A={table.overall_a_chain_rate * 100:.1f}%  "
         f"B={table.overall_b_chain_rate * 100:.1f}%  "
         f"C={table.overall_c_chain_rate * 100:.1f}%"
     )
+    if has_d:
+        summary += f"  D={table.overall_d_chain_rate * 100:.1f}%"
+    lines.append(summary)
     return "\n".join(lines)
 
 

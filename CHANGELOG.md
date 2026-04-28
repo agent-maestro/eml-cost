@@ -6,6 +6,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.17.1] — 2026-04-28 — two-sided chain regularizer + benchmark condition D
+
+A focused iteration on the chain-order regularizer in response
+to the 0.17.0 finding that one-sided (upper-bound-only)
+regularization cannot prevent underfitting.
+
+### Added
+
+  - **`RegularizerConfig.target_chain_order`** — when set,
+    switches the chain-order penalty to **two-sided** absolute-
+    deviation mode: ``penalty = lambda_chain * |chain_order -
+    target_chain_order|``. Penalises both overshoot and
+    undershoot. ``is_feasible`` becomes
+    ``chain_order == target_chain_order`` in this mode.
+
+  - **Benchmark condition D** — fourth condition in
+    :func:`eml_cost.regression.benchmark.run_benchmark`. Uses
+    two-sided regularization with ``target_chain_order`` derived
+    from :func:`estimate_dynamics` on the regression target. Pass
+    ``include_two_sided=False`` to drop back to the 0.17.0
+    three-condition harness.
+
+  - **Noise-floor gate in `_detect_oscillations`** —
+    ``min_peak_to_median=20.0`` ratio gate prevents the FFT
+    peak-detection from registering pure noise as oscillations.
+    Was triggering false positives on chain-0 problems with
+    sample-grid jitter.
+
+### Validation rerun
+
+The 4-condition rerun is documented in
+`monogate-research/exploration/eml-symbolic-regression-2026-04-28-v2/FINDINGS.md`.
+
+### Default policy
+
+The 0.17.0 one-sided behaviour remains the default (no API
+break). Users who can derive a target chain order from data
+should pass ``target_chain_order=...`` to switch on two-sided
+mode.
+
+### Tests
+
+  - +6 tests for two-sided regularizer mode in
+    ``test_regularizer.py``.
+  - +1 test for ``include_two_sided=False`` benchmark mode.
+
+
 ## [0.17.0] — 2026-04-28 — GP search engine + Feynman benchmark
 
 Phase 2 of EML-native symbolic regression. The 0.16.0 regularizer
