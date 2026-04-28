@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eml-cost"
-version = "0.18.0"
+version = "0.19.0"
 description = "Pfaffian chain order, EML routing depth, and the symbolic-expression toolbelt for SymPy."
 readme = "README.md"
 requires-python = ">=3.10"

@@ -55,6 +55,13 @@ from .guards import CostLimitExceeded, costlimit
 from .batch import analyze_batch, cache_hit_analysis
 from .profile import DEFAULT_WEIGHTS, PfaffianProfile
 from .regularizer import RegularizerConfig, RegularizerResult, regularize
+from .transpile import (
+    TranspileResult,
+    eml_tree_to_c,
+    eml_tree_to_numpy,
+    eml_tree_to_python,
+    eml_tree_to_sympy,
+)
 from .core import (
     PFAFFIAN_NOT_EML_R,
     eml_depth,
@@ -65,7 +72,7 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.17.1"
+__version__ = "0.19.0"
 
 __all__ = [
     "__version__",
@@ -116,6 +123,11 @@ __all__ = [
     "regularize",
     "RegularizerConfig",
     "RegularizerResult",
+    "TranspileResult",
+    "eml_tree_to_python",
+    "eml_tree_to_numpy",
+    "eml_tree_to_sympy",
+    "eml_tree_to_c",
     "estimate_dynamics",
     "DataDynamics",
 ]

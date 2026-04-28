@@ -6,6 +6,75 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.19.0] — 2026-04-28 — Tool 5: EML → Python/NumPy/SymPy/C transpiler
+
+First ship of the LLM-native EML tools roadmap (see
+`monogate-research/roadmap/llm-native-eml-tools.md`). Tool 5 turns
+any verified SymPy expression into executable code in four targets,
+each with an auto-generated verification snippet sampled at a
+deterministic point.
+
+### Added
+
+  - **`eml_cost.transpile`** module + four public top-level helpers:
+    - **`eml_tree_to_python(expr)`** — plain ``math.*`` callable.
+    - **`eml_tree_to_numpy(expr)`** — vectorised ``np.*`` callable;
+      same source works on scalars and ndarrays.
+    - **`eml_tree_to_sympy(expr)`** — symbolic recreation block with
+      free symbols declared as locals (so the agent can call
+      ``expr.diff(x)`` directly).
+    - **`eml_tree_to_c(expr)`** — ISO-C99 ``<math.h>`` body, with a
+      forward-bridge note marking where libmonogate.h calls will
+      land once the Monogate Extractor product ships.
+
+  - **`TranspileResult`** frozen dataclass: surfaces the generated
+    code, imports, function name, ordered free-variable list, the
+    EML profile (chain order / node count / cost class), and the
+    auto-generated verification snippet keyed off a deterministic
+    sample point. ``full_source()`` returns imports + code +
+    verification ready to ``exec``.
+
+  - **Auto-verification:** for each executable target the
+    transpiler picks ``var_i = 1.0 + 0.5 * i`` for each free
+    symbol, evaluates the expression numerically, and emits a
+    ``math.isclose`` (or ``np.isclose``) assertion. Runs clean on
+    every well-defined expression; expressions that diverge at the
+    sample point return an empty verification slot rather than a
+    spurious NaN-asserting line.
+
+### Bug fixes
+
+  - **Version drift** — ``eml_cost.__version__`` was still
+    ``"0.17.1"`` in 0.18.0 even though ``pyproject.toml`` shipped
+    ``"0.18.0"``. Synced both to ``"0.19.0"`` in this release.
+
+### Tests
+
+  - +23 tests in ``test_transpile.py`` covering result shape, free
+    symbol auto-detection, all four targets' code generation,
+    sample-point semantics, divergence handling, custom function
+    names, and self-execution of the verification snippets.
+  - Suite total: **629 passing** (up from 606 in 0.18.0).
+
+### Honest framing
+
+The transpiler is a thin shell over SymPy's existing code printers
+(``sympy.printing.pycode``, ``sympy.printing.numpy.NumPyPrinter``,
+``sympy.ccode``). The value-add is consistent function-source
+wrapping with imports, auto-detection of free symbols in
+alphabetical-by-name order, and per-target conventions that match
+what an agent expects in its sandbox. It is **structural**: it
+does not canonicalise or optimise the expression. Pass the input
+through ``eml_cost.canonicalize`` first if you want the
+SuperBEST-routed form.
+
+### Next on the roadmap
+
+Tool 4 (custom Lean tactics — pure Lean code, zero infrastructure)
+is the next zero-friction ship. Tools 1-3 require a Fly.io machine
+sizing decision (Lean + Mathlib pre-built image is ~2 GB).
+
+
 ## [0.18.0] — 2026-04-28 — Phase 2.5 (estimate_dynamics curvature fix) + Phase 5 (`eml-cost regress` CLI)
 
 Closeout release for the EML-Native Symbolic Regression effort
