@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.16.0] — 2026-04-28 — chain-order regularizer + data dynamics estimator
+
+Phase 1 of the EML-Native Symbolic Regression effort. Two new
+public modules wire the existing `analyze` /
+`predict_chain_order_via_additivity` / `recommend_form` machinery
+into a search-loop-friendly regularizer.
+
+### Added
+
+  - **`eml_cost.regularize`** — score a candidate expression by
+    chain-order excess, node count, dynamics mismatch, and
+    recommend_form distance. Each component is independently
+    weighted via `RegularizerConfig`; output is the frozen
+    `RegularizerResult` with per-component breakdown and a
+    one-line `explanation`.
+
+  - **`eml_cost.estimate_dynamics`** — infer the
+    `(n_oscillations, n_decays, n_static)` signature from a
+    sampled `(x, y)` series via FFT (oscillation modes) and
+    Hilbert envelope analysis (decay modes). Returns a frozen
+    `DataDynamics` dataclass usable as
+    `RegularizerConfig.expected_dynamics`. Numpy + scipy are
+    optional; install via `pip install eml-cost[data]`.
+
+  - **Optional extra `[data]`**: numpy>=1.24, scipy>=1.10. The
+    core package remains sympy-only.
+
+### Honest framing
+
+Chain order is a **structural** measure — Spearman ρ ≈ 0.4
+against Chebyshev polynomial-approximation degree on a 35-expression
+probe (see `monogate-research/exploration/zk-circuit-cost-2026-04-28/`).
+The regularizer biases search toward simpler EML forms; it does
+not guarantee numerical stability or polynomial-degree minimality.
+
+### Tests
+
+  - +33 tests across `test_regularizer.py` and
+    `test_data_analyzer.py`. Suite total: 546 passing.
+
+
 ## [0.14.0] — 2026-04-27 — registry consistency · `besselk` and Hankel 3→5
 
 Fixes three more chain-order undercounts in PFAFFIAN_NOT_EML_R,

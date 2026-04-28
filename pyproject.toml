@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eml-cost"
-version = "0.15.1"
+version = "0.16.0"
 description = "Pfaffian chain order, EML routing depth, and the symbolic-expression toolbelt for SymPy."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -38,7 +38,8 @@ witness = ["eml-discover>=0.2.0"]                     # witness needs identify()
 explore = ["eml-discover>=0.2.0"]                     # explore needs identify() too
 graph = []                                            # graph emits DOT; no hard graphviz dep
 jupyter = ["ipython>=7.0", "eml-discover>=0.2.0"]     # jupyter formatter + witness chain
-all = ["eml-discover>=0.2.0", "ipython>=7.0"]
+data = ["numpy>=1.24", "scipy>=1.10"]                 # estimate_dynamics: FFT + Hilbert envelope
+all = ["eml-discover>=0.2.0", "ipython>=7.0", "numpy>=1.24", "scipy>=1.10"]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
@@ -46,6 +47,8 @@ dev = [
     "ruff>=0.1",
     "ipython>=7.0",
     "eml-discover>=0.2.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
 ]
 
 [project.scripts]
