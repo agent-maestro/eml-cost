@@ -6,6 +6,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.14.0] — 2026-04-27 — registry consistency · `besselk` and Hankel 3→5
+
+Fixes three more chain-order undercounts in PFAFFIAN_NOT_EML_R,
+discovered during the Y_n higher-order analysis of 2026-04-27
+(`monogate-research/exploration/yn-higher-order-2026-04-27/`).
+
+The registry has `bessely` at chain 5 with comment "log-singular
+at origin". `besselk` at integer n has the SAME log-singularity
+structure (DLMF 10.31.2):
+
+  K_n(x) = (1/2)·(-1)^(n+1)·I_n(x)·[2·ln(x/2) + 2γ - ψ(n+1)]
+          + finite series
+
+It was registered at 3 — same as J_n / I_n which are analytic at 0.
+By the chain-order additivity rule and the structural parallel to
+bessely, K_n should be 5 — matching the spherical analog `hn1`/`hn2`
+which the registry already correctly tags at 5.
+
+Hankel functions H_n^(1) = J_n + i·Y_n and H_n^(2) = J_n - i·Y_n
+inherit Y_n's log-singularity (one of their two components is
+chain 5). Same fix applies.
+
+### Changed
+
+  - **`PFAFFIAN_NOT_EML_R["besselk"]`: 3 → 5.** Aligns with
+    bessely under the log-singularity argument at integer n.
+  - **`PFAFFIAN_NOT_EML_R["hankel1"]`: 3 → 5.** Composition
+    inheriting Y_n's chain.
+  - **`PFAFFIAN_NOT_EML_R["hankel2"]`: 3 → 5.** Same.
+  - Inline comment expanded to cite DLMF 10.31.2 and the
+    empirical-discovery exploration directory.
+
+### Migration notes
+
+Code that asserted `eml_cost.analyze(sp.besselk(0, x)).pfaffian_r == 3`,
+or the same for hankel1/hankel2, will break. Corrected value is 5.
+
+The asymmetry between hn1/hn2 (already correct at 5, added in 0.9.0
+with comment "log-singular like bessely") and hankel1/hankel2
+(previously 3) was the giveaway that the latter was undercounted.
+
+### Source
+
+  - Discovery: `monogate-research/exploration/yn-higher-order-2026-04-27/`
+  - Companion: `monogate-research/exploration/full-corpus-additivity-2026-04-27/`
+  - Validates: chain-order additivity rule across log-singular
+    Bessel-family entries.
+
+---
+
 ## [0.13.0] — 2026-04-27 — registry consistency fix · `riemann_xi` 5→6
 
 Fixes a chain-order miscount discovered during the 9th-tier

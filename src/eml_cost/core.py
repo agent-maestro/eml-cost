@@ -39,9 +39,12 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     "besselj": 3,    # {1/x, J0, J1}
     "bessely": 5,    # {1/x, ln(x), J0, Y0, Y1} — log-singular at origin
     "besseli": 3,
-    "besselk": 3,
-    "hankel1": 3,
-    "hankel2": 3,
+    "besselk": 5,    # log-singular at integer order, same as bessely.
+    # K_n(x) = (1/2)·(-1)^(n+1)·I_n(x)·[2 ln(x/2) + 2γ - ψ(n+1)] + finite series
+    # at integer n (DLMF 10.31.2). Chain-order additivity rule gives 5 to
+    # match Y_n. Corrected from 3 in 0.14.0; see exploration/yn-higher-order-2026-04-27/.
+    "hankel1": 5,    # = J_n + i·Y_n — inherits Y_n's log-singularity
+    "hankel2": 5,    # = J_n - i·Y_n — inherits Y_n's log-singularity
     # --- Airy family ---
     "airyai": 3,
     "airybi": 3,
