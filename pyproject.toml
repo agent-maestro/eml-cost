@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eml-cost"
-version = "0.14.0"
-description = "Pfaffian chain order and EML routing depth for symbolic expressions."
+version = "0.15.0"
+description = "Pfaffian chain order, EML routing depth, and the symbolic-expression toolbelt for SymPy."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "PROPRIETARY-PRE-RELEASE" }
@@ -32,15 +32,30 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Subpackage extras — opt-in for heavier deps.
+rewrite = []                                          # rewrite uses only sympy + eml-cost core
+witness = ["eml-discover>=0.2.0"]                     # witness needs identify()
+explore = ["eml-discover>=0.2.0"]                     # explore needs identify() too
+graph = []                                            # graph emits DOT; no hard graphviz dep
+jupyter = ["ipython>=7.0", "eml-discover>=0.2.0"]     # jupyter formatter + witness chain
+all = ["eml-discover>=0.2.0", "ipython>=7.0"]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "mypy>=1.5",
     "ruff>=0.1",
+    "ipython>=7.0",
+    "eml-discover>=0.2.0",
 ]
 
 [project.scripts]
 eml-cost = "eml_cost.cli:_entrypoint"
+# Backwards-compatible console scripts — these used to live in
+# their own packages, now provided by eml-cost so existing muscle
+# memory keeps working after the standalone packages are
+# deprecated.
+eml-rewrite = "eml_cost.rewrite.cli:main"
+eml-explore = "eml_cost.explore.cli:main"
 
 [project.urls]
 Homepage = "https://monogate.org"
