@@ -207,3 +207,85 @@ def test_console_entry_point_is_importable() -> None:
     points at eml_cost.cli:_entrypoint. Import must succeed."""
     from eml_cost.cli import _entrypoint  # noqa: F401
     assert callable(_entrypoint)
+
+
+# ---------------------------------------------------------------------------
+# `regress` (Phase 5, ships 0.18.0)
+# ---------------------------------------------------------------------------
+
+_np = pytest.importorskip("numpy")
+
+
+def _write_xy_csv(path: Path, x, y) -> None:
+    rows = ["x,y"] + [f"{xi},{yi}" for xi, yi in zip(x, y)]
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+
+def test_regress_recovers_sine(tmp_path: Path) -> None:
+    pytest.importorskip("scipy")
+    import numpy as np
+    x = np.linspace(0.0, 4.0 * np.pi, 200)
+    y = np.sin(x)
+    csv_path = tmp_path / "sine.csv"
+    _write_xy_csv(csv_path, x, y)
+
+    out = io.StringIO()
+    rc = main(
+        ["regress", str(csv_path),
+         "--population", "30", "--generations", "8", "--seed", "1"],
+        out=out,
+    )
+    assert rc == EXIT_OK
+    txt = out.getvalue()
+    assert "data dynamics" in txt
+    assert "n_osc=1" in txt
+    assert "discovered expression" in txt
+
+
+def test_regress_json_mode(tmp_path: Path) -> None:
+    pytest.importorskip("scipy")
+    import numpy as np
+    x = np.linspace(0.0, 10.0, 200)
+    y = np.exp(-0.5 * x)
+    csv_path = tmp_path / "decay.csv"
+    _write_xy_csv(csv_path, x, y)
+
+    out = io.StringIO()
+    rc = main(
+        ["regress", str(csv_path),
+         "--population", "20", "--generations", "5",
+         "--seed", "1", "--json"],
+        out=out,
+    )
+    assert rc == EXIT_OK
+    payload = json.loads(out.getvalue())
+    assert "expression" in payload
+    assert "chain_order" in payload
+    assert "dynamics" in payload
+    # Phase 2.5 extrema gate: monotone decay must NOT register oscillation.
+    assert payload["dynamics"]["n_oscillations"] == 0
+
+
+def test_regress_too_few_points_returns_usage(tmp_path: Path) -> None:
+    csv_path = tmp_path / "tiny.csv"
+    csv_path.write_text("x,y\n0,0\n1,1\n", encoding="utf-8")
+    out = io.StringIO()
+    rc = main(["regress", str(csv_path)], out=out)
+    assert rc == EXIT_USAGE
+
+
+def test_regress_no_regularizer_flag(tmp_path: Path) -> None:
+    pytest.importorskip("scipy")
+    import numpy as np
+    x = np.linspace(0.0, 4.0 * np.pi, 200)
+    y = np.sin(x)
+    csv_path = tmp_path / "sine.csv"
+    _write_xy_csv(csv_path, x, y)
+
+    out = io.StringIO()
+    rc = main(
+        ["regress", str(csv_path), "--no-regularizer",
+         "--population", "20", "--generations", "5", "--seed", "1"],
+        out=out,
+    )
+    assert rc == EXIT_OK

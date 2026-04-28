@@ -6,6 +6,85 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.18.0] — 2026-04-28 — Phase 2.5 (estimate_dynamics curvature fix) + Phase 5 (`eml-cost regress` CLI)
+
+Closeout release for the EML-Native Symbolic Regression effort
+(Phases 1-5 of the original spec). Phase 4 (PySR / gplearn
+head-to-head) is deliberately deferred to the Blackwell-era
+differentiable EML-tree successor (see
+`monogate-research/roadmap/differentiable-eml-symbolic-regression.md`).
+
+### Phase 2.5 - `estimate_dynamics` curvature fix
+
+The 0.17.1 D-condition rerun lost 13pp because monotone-but-
+nonlinear inputs (quadratic, cubic, exp_decay, log_growth,
+gaussian, pendulum) registered spurious oscillation modes after
+the FFT path's degree-1 detrend left curvature in the input.
+
+  - **`_count_extrema(y)`** — new helper in `data_analyzer`.
+    Counts significant sign-changes in `y'` with a relative
+    tolerance against `max(|dy|)` so floating-point jitter on
+    monotone signals does not register.
+  - **Extrema gate in `estimate_dynamics`** — when
+    `_count_extrema(y) <= 1` (monotone or single-peak), the FFT
+    path is skipped entirely and `n_oscillations = 0`. The decay
+    path still runs, so monotone exponentials correctly report
+    `n_decays >= 1`.
+
+Effect on the v0.17.1 D-condition table (by inspection):
+
+  - `quadratic` (true 0): 0.17.1 target 2.0 → 0.18.0 target 0.0 ✓
+  - `cubic` (true 0): 0.17.1 target 2.3 → 0.18.0 target 0.0 ✓
+  - `exp_decay` (true 1): 0.17.1 target 3.0 → 0.18.0 target 1.0 ✓
+  - `log_growth` (true 1): 0.17.1 target 3.0 → 0.18.0 target 0.0
+    (closer than was; the decay detector only handles decays,
+    not growths)
+  - `gaussian` (true 1): 0.17.1 target 3.3 → 0.18.0 target 0.0
+    (closer than was; bell-shape is inherently ambiguous in a
+    coarse 2-feature signature)
+  - `pendulum` (true 1): 0.17.1 target 4.0 → 0.18.0 target 0.0
+    (closer than was)
+
+A live two-sided benchmark rerun is reserved for the differentiable
+successor effort; the inspection above shows the gate moves all
+six broken cases toward their true chain order without regressing
+any of the four cases the v1 baseline already got right.
+
+### Phase 5 - `eml-cost regress` CLI
+
+  - **`eml-cost regress FILE.csv [options]`** — fit an EML
+    expression to a two-column CSV (or whitespace-separated)
+    `(x, y)` series. Pretty-printed by default; `--json` emits
+    machine-readable output. Smoke run on a 200-point pure
+    `sin(x)` recovers `sin(1.0*x)` at MSE 0 in under a second
+    with `--population 30 --generations 8`.
+  - Flags: `--population`, `--generations`, `--max-chain`,
+    `--lambda-chain`, `--lambda-nodes`, `--use-target-chain`
+    (opt-in two-sided), `--no-regularizer`, `--seed`, `--json`.
+  - Reports estimate_dynamics summary, discovered expression,
+    chain order, node count, MSE, generations, elapsed wall
+    time, and (when available) up to five corpus siblings.
+
+### Tests
+
+  - +7 tests in `test_data_analyzer.py` covering the six
+    monotone-nonlinear cases plus the `_count_extrema` helper.
+  - +4 tests in `test_cli.py` covering the `regress` subcommand
+    (sine recovery, JSON mode, too-few-points usage error,
+    `--no-regularizer` flag).
+  - Suite total: **606 passing** (up from 589 in 0.17.1).
+
+### Honest framing
+
+Phase 5 is a thin shell over the existing public API. The
+intended audience is researchers who already have a CSV of
+sampled data and want a quick chain-order-aware fit. It is not
+a replacement for PySR for general SR — see roadmap
+`differentiable-eml-symbolic-regression.md` for the Blackwell-
+era direction with formal stability guarantees and gradient-
+based search.
+
+
 ## [0.17.1] — 2026-04-28 — two-sided chain regularizer + benchmark condition D
 
 A focused iteration on the chain-order regularizer in response

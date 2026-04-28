@@ -272,6 +272,169 @@ def _cmd_version(args: argparse.Namespace, *, out: TextIO) -> int:
     return EXIT_OK
 
 
+def _read_csv_xy(path: str) -> tuple[list[float], list[float]]:
+    """Read a two-column CSV (or whitespace-separated) of x,y values.
+
+    Skips a single header row when the first row is non-numeric.
+    Lines starting with ``#`` and blank lines are ignored.
+    """
+    import csv as _csv
+
+    xs: list[float] = []
+    ys: list[float] = []
+    src: TextIO
+    if path == "-":
+        src = sys.stdin
+    else:
+        src = open(path, "r", encoding="utf-8", newline="")
+    try:
+        sniff_buf: list[str] = []
+        for line in src:
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            sniff_buf.append(line)
+        if not sniff_buf:
+            return [], []
+        # Detect delimiter: prefer comma, fall back to whitespace.
+        sample = sniff_buf[0]
+        delim = "," if "," in sample else None
+        for raw in sniff_buf:
+            parts: list[str]
+            if delim == ",":
+                parts = [p.strip() for p in raw.split(",")]
+            else:
+                parts = raw.split()
+            if len(parts) < 2:
+                continue
+            try:
+                x_val = float(parts[0])
+                y_val = float(parts[1])
+            except ValueError:
+                # Header row — skip silently the first time.
+                if not xs:
+                    continue
+                raise
+            xs.append(x_val)
+            ys.append(y_val)
+        return xs, ys
+    finally:
+        if src is not sys.stdin:
+            src.close()
+
+
+def _cmd_regress(args: argparse.Namespace, *, out: TextIO) -> int:
+    """eml-cost regress <file.csv> — fit an EML expression to (x, y) data."""
+    try:
+        import numpy as _np  # noqa: F401
+    except ImportError:
+        print(
+            "error: 'eml-cost regress' requires numpy and scipy. "
+            "Install with: pip install eml-cost[data]",
+            file=sys.stderr,
+        )
+        return EXIT_USAGE
+
+    try:
+        from .data_analyzer import estimate_dynamics
+        from .regression import GPConfig, search
+        from .regularizer import RegularizerConfig
+        from .siblings import find_siblings
+    except ImportError as exc:
+        print(f"error: regression backend unavailable: {exc}", file=sys.stderr)
+        return EXIT_USAGE
+
+    xs, ys = _read_csv_xy(args.file)
+    if len(xs) < 8:
+        print(
+            f"error: need at least 8 data points, got {len(xs)}",
+            file=sys.stderr,
+        )
+        return EXIT_USAGE
+
+    import numpy as np  # type: ignore[no-redef]
+
+    x_arr = np.asarray(xs, dtype=float)
+    y_arr = np.asarray(ys, dtype=float)
+
+    dyn = estimate_dynamics(x_arr, y_arr)
+
+    reg_cfg = None
+    if not args.no_regularizer:
+        reg_cfg = RegularizerConfig(
+            lambda_chain=args.lambda_chain,
+            lambda_nodes=args.lambda_nodes,
+            max_chain_order=args.max_chain,
+        )
+        if args.use_target_chain:
+            reg_cfg = RegularizerConfig(
+                lambda_chain=args.lambda_chain,
+                lambda_nodes=args.lambda_nodes,
+                max_chain_order=args.max_chain,
+                target_chain_order=dyn.estimated_chain_order,
+            )
+
+    config = GPConfig(
+        population_size=args.population,
+        n_generations=args.generations,
+        regularizer=reg_cfg,
+        seed=args.seed,
+    )
+
+    result = search(x_arr, y_arr, var_names=("x",), config=config)
+
+    siblings_list: list[str] = []
+    try:
+        sibs = find_siblings(str(result.expression))
+        siblings_list = [getattr(s, "name", str(s)) for s in sibs]
+    except Exception:  # noqa: BLE001
+        pass
+
+    if args.json:
+        payload = {
+            "version": __version__,
+            "dynamics": {
+                "n_oscillations": int(dyn.n_oscillations),
+                "n_decays": int(dyn.n_decays),
+                "estimated_chain_order": int(dyn.estimated_chain_order),
+                "confidence": float(dyn.confidence),
+            },
+            "expression": str(result.expression),
+            "chain_order": int(result.chain_order),
+            "node_count": int(result.node_count),
+            "mse": float(result.mse),
+            "penalty": float(result.penalty),
+            "fitness": float(result.fitness),
+            "generations_run": int(result.generations_run),
+            "elapsed_seconds": float(result.elapsed_seconds),
+            "converged": bool(result.converged),
+            "siblings": siblings_list,
+        }
+        json.dump(payload, out, indent=2)
+        out.write("\n")
+    else:
+        out.write(
+            f"data dynamics: n_osc={dyn.n_oscillations}  "
+            f"n_decays={dyn.n_decays}  "
+            f"estimated_chain={dyn.estimated_chain_order}  "
+            f"confidence={dyn.confidence:.2f}\n"
+        )
+        out.write(f"discovered expression: {result.expression}\n")
+        out.write(
+            f"  chain_order={result.chain_order}  "
+            f"node_count={result.node_count}  "
+            f"mse={result.mse:.4e}\n"
+        )
+        out.write(
+            f"  generations={result.generations_run}  "
+            f"elapsed={result.elapsed_seconds:.1f}s  "
+            f"converged={result.converged}\n"
+        )
+        if siblings_list:
+            out.write("  siblings: " + ", ".join(siblings_list[:5]) + "\n")
+    return EXIT_OK
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="eml-cost",
@@ -324,6 +487,70 @@ def _build_parser() -> argparse.ArgumentParser:
               "info: < 0.2 s; warn: 0.2-5 s; error: > 5 s."),
     )
 
+    # regress -------------------------------------------------------------
+    pg = sub.add_parser(
+        "regress",
+        help=("Symbolic-regress a CSV of (x, y) using EML genetic "
+              "programming with chain-order regularization."),
+    )
+    pg.add_argument(
+        "file",
+        help="Two-column CSV (or whitespace-separated) of x,y; - for stdin.",
+    )
+    pg.add_argument(
+        "--population",
+        type=int,
+        default=80,
+        help="GP population size (default: 80).",
+    )
+    pg.add_argument(
+        "--generations",
+        type=int,
+        default=30,
+        help="GP generation count (default: 30).",
+    )
+    pg.add_argument(
+        "--max-chain",
+        type=int,
+        default=4,
+        help="One-sided chain-order budget (default: 4).",
+    )
+    pg.add_argument(
+        "--lambda-chain",
+        type=float,
+        default=1.0,
+        help="Regularizer weight on chain-order excess (default: 1.0).",
+    )
+    pg.add_argument(
+        "--lambda-nodes",
+        type=float,
+        default=0.1,
+        help="Regularizer weight on node count (default: 0.1).",
+    )
+    pg.add_argument(
+        "--use-target-chain",
+        action="store_true",
+        help=("Switch to two-sided regularizer with target inferred "
+              "from estimate_dynamics. Off by default; the data "
+              "estimator can mis-target on monotone-nonlinear inputs."),
+    )
+    pg.add_argument(
+        "--no-regularizer",
+        action="store_true",
+        help="Disable structural regularization (fit on MSE only).",
+    )
+    pg.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="RNG seed for reproducibility.",
+    )
+    pg.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON instead of pretty text.",
+    )
+
     # version -------------------------------------------------------------
     sub.add_parser("version", help="Print eml-cost version + trilogy summary.")
 
@@ -342,6 +569,8 @@ def main(argv: Sequence[str] | None = None, *, out: TextIO | None = None) -> int
         return _cmd_check(args, out=target_out)
     if args.cmd == "lint":
         return _cmd_lint(args, out=target_out)
+    if args.cmd == "regress":
+        return _cmd_regress(args, out=target_out)
     if args.cmd == "version":
         return _cmd_version(args, out=target_out)
 

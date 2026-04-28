@@ -134,6 +134,32 @@ class DataDynamics:
     is_bounded: bool = True
 
 
+def _count_extrema(y: np.ndarray, *, rel_tol: float = 0.01) -> int:
+    """Count significant local extrema as sign changes in ``y'``.
+
+    A monotone signal returns ``0``, a single-peak / single-valley
+    shape returns ``1``, multi-peak signals return ``>=2``.
+
+    The tolerance is relative to ``max(|dy|)`` so floating-point
+    jitter on an otherwise-monotone signal does not register as
+    spurious oscillation. This gate prevents quadratic / cubic /
+    exp-decay / log-growth / pendulum / gaussian shapes from
+    masquerading as oscillations after linear FFT detrending — the
+    documented v0.17.1 D-condition failure mode.
+    """
+    dy = np.diff(np.asarray(y, dtype=float))
+    if dy.size <= 1:
+        return 0
+    max_abs = float(np.max(np.abs(dy)))
+    if max_abs == 0.0:
+        return 0
+    threshold = rel_tol * max_abs
+    sig = dy[np.abs(dy) > threshold]
+    if sig.size <= 1:
+        return 0
+    return int(np.sum(np.sign(sig[1:]) != np.sign(sig[:-1])))
+
+
 def _detect_oscillations(
     y: np.ndarray,
     dx: float,
@@ -372,11 +398,22 @@ def estimate_dynamics(
     diffs = np.diff(arr_x)
     dx = float(np.mean(diffs)) if diffs.size > 0 else 1.0
 
-    freqs, dom_ratio = _detect_oscillations(
-        arr_y, dx,
-        min_power_ratio=min_power_ratio,
-        max_modes=max_modes,
-    )
+    # Monotonicity / single-peak gate (Phase 2.5, ships in 0.18.0).
+    # A signal with at most one significant extremum cannot be
+    # oscillatory in any meaningful FFT sense — its spectrum
+    # reflects shape, not frequency. Skipping the FFT path here
+    # prevents the v0.17.1 D-condition failure where quadratic /
+    # cubic / exp-decay / log-growth / pendulum / gaussian shapes
+    # registered spurious oscillation modes after linear detrending.
+    if _count_extrema(arr_y) <= 1:
+        freqs: list[float] = []
+        dom_ratio = 0.0
+    else:
+        freqs, dom_ratio = _detect_oscillations(
+            arr_y, dx,
+            min_power_ratio=min_power_ratio,
+            max_modes=max_modes,
+        )
     n_osc = len(freqs)
 
     n_decay, rates = _detect_decays(
