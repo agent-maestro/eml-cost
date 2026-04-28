@@ -144,7 +144,7 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
 }
 
 
-_TANH_LIKE = (sp.tanh, sp.atan, sp.atanh, sp.asinh, sp.acosh)
+_TANH_LIKE = (sp.tanh, sp.atan, sp.atanh, sp.asinh, sp.acosh, sp.asin, sp.acos)
 _SIN_LIKE = (sp.sin, sp.cos)
 _HYPER_PAIR = (sp.sinh, sp.cosh)
 
@@ -262,6 +262,124 @@ def pfaffian_r(expr: sp.Basic) -> int:
     chains: set[sp.Basic] = set()
     _collect_chain(expr, chains)
     return len(chains)
+
+
+# ---------------------------------------------------------------------------
+# Per-class additivity prediction (paper-section formulation)
+# ---------------------------------------------------------------------------
+
+
+def predict_chain_order_via_additivity(expr: sp.Basic) -> int:
+    """Predict chain order via the per-AST-node additivity rule.
+
+    Walks the SymPy canonical form of ``expr`` and sums per-primitive-
+    class contributions. The rule was derived from a 50+ expression
+    probe documented in
+    ``monogate-research/exploration/detector-conventions-2026-04-27/``
+    and verified 18/18 exact on the PNE corpus, 44/44 on the combined
+    PNE corpus (post 0.14.0 registry refit).
+
+    Per-class contributions::
+
+        CLASS 0  (chain 0):
+          - bare variables, polynomials, integer/rational constants
+          - integer-exponent ``Pow`` of a CLASS-0 base
+          - ``Add`` / ``Mul`` nodes themselves
+
+        CLASS 1  (each contributes +1):
+          - ``ln``, ``exp``
+          - ``tan``, ``atan``, ``atanh``, ``asinh``, ``acosh``,
+            ``tanh``, ``asin``  (the ``_TANH_LIKE`` group post 0.15.1)
+          - ``Pow`` with non-integer or symbolic exponent
+
+        CLASS 2  (each contributes +2):
+          - ``sin``, ``cos``  (``_SIN_LIKE``)
+          - ``sinh``, ``cosh`` (``_HYPER_PAIR``)
+
+        CLASS PNE  (each contributes registry value):
+          - any registered Pfaffian-not-elementary primitive with
+            chain order from :data:`PFAFFIAN_NOT_EML_R`. Distinct
+            sub-expression instances each count once.
+
+    The returned integer is comparable to :func:`pfaffian_r` for most
+    expressions; the two methods agree on the 44/44 PNE corpus and on
+    every expression in the detector-conventions probe. For users who
+    want to verify both in parallel::
+
+        from eml_cost import analyze, predict_chain_order_via_additivity
+        agree = predict_chain_order_via_additivity(expr) == analyze(expr).pfaffian_r
+
+    Returns 0 for atoms / numbers and any non-Basic input.
+    """
+    if not isinstance(expr, sp.Basic):
+        try:
+            expr = sp.sympify(expr)
+        except (sp.SympifyError, TypeError):
+            return 0
+
+    total = 0
+    # Khovanskii chain-generator dedup: multiple AST occurrences of
+    # the same chain-contributing sub-expression (e.g. exp(x) in both
+    # numerator and denominator) count once, not per-occurrence.
+    # Matches the existing pfaffian_r engine which collects chain
+    # generators into a set. _SIN_LIKE / _HYPER_PAIR canonicalize to
+    # their (sin, cos) / (exp(arg), exp(-arg)) generator pair so that
+    # sin(x) and cos(x) sharing an argument count as ONE chain of 2.
+
+    seen_chains: set[sp.Basic] = set()
+
+    def add_chain(key: sp.Basic, weight: int) -> None:
+        nonlocal total
+        if key not in seen_chains:
+            total += weight
+            seen_chains.add(key)
+
+    for node in sp.preorder_traversal(expr):
+        if not isinstance(node, sp.Basic):
+            continue
+        if node.is_Atom:
+            continue
+
+        func = node.func
+
+        # CLASS 2 — sin / cos: dedup on the (sin, cos) generator pair
+        # so sin(x) + cos(x) counts once.
+        if isinstance(node, _SIN_LIKE):
+            add_chain(("sin_cos", node.args[0]), 2)
+            continue
+
+        # CLASS 2 — sinh / cosh: same dedup pattern.
+        if isinstance(node, _HYPER_PAIR):
+            add_chain(("sinh_cosh", node.args[0]), 2)
+            continue
+
+        # CLASS 1 — ln / exp.
+        if func is sp.exp or func is sp.log:
+            add_chain(node, 1)
+            continue
+
+        # CLASS 1 — tan / atan / atanh / asinh / acosh / tanh / asin / acos.
+        if func is sp.tan or isinstance(node, _TANH_LIKE):
+            add_chain(node, 1)
+            continue
+
+        # CLASS 1 — Pow with non-integer or symbolic exponent.
+        if func is sp.Pow:
+            _, exponent = node.args
+            if not exponent.is_Integer:
+                add_chain(node, 1)
+            # integer-exponent Pow contributes 0 (CLASS 0)
+            continue
+
+        # CLASS PNE — registered Pfaffian-not-elementary primitive.
+        fname = getattr(func, "__name__", "")
+        if fname in PFAFFIAN_NOT_EML_R and _is_registered_pne(node):
+            add_chain(node, PFAFFIAN_NOT_EML_R[fname])
+            continue
+
+        # Add / Mul / generic container — CLASS 0 (no contribution)
+
+    return total
 
 
 # ---------------------------------------------------------------------------

@@ -60,10 +60,11 @@ from .core import (
     is_pfaffian_not_eml,
     max_path_r,
     pfaffian_r,
+    predict_chain_order_via_additivity,
     structural_overhead,
 )
 
-__version__ = "0.15.0"
+__version__ = "0.15.1"
 
 __all__ = [
     "__version__",
@@ -84,6 +85,7 @@ __all__ = [
     "eml_depth",
     "structural_overhead",
     "is_pfaffian_not_eml",
+    "predict_chain_order_via_additivity",
     "PFAFFIAN_NOT_EML_R",
     "PfaffianProfile",
     "DEFAULT_WEIGHTS",
