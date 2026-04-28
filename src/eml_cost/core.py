@@ -123,7 +123,10 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     "dirichlet_eta": 4,  # η(s) = (1 − 2^(1−s))·ζ(s)
     "lerchphi": 4,    # Lerch transcendent — generalises polylog/ζ
     "stieltjes": 4,   # Stieltjes constants — derivatives of ζ at s=1
-    "riemann_xi": 5,  # ξ(s) = (s−1)π^(−s/2)Γ(s/2+1)ζ(s)
+    "riemann_xi": 6,  # ξ(s) = (s(s−1)/2)·π^(−s/2)·Γ(s/2)·ζ(s).
+    # Chain-additivity rule: chain_order(Γ) + chain_order(ζ) = 2 + 4 = 6.
+    # Corrected from 5 in 0.13.0; see exploration/chain-5-hunt-2026-04-27/
+    # for the discovery + reasoning.
     # Hypergeometric extensions
     "meijerg": 4,     # Meijer G — most general hypergeometric
     "appellf1": 3,    # Appell F1 — bivariate hypergeometric

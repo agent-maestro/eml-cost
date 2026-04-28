@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.13.0] — 2026-04-27 — registry consistency fix · `riemann_xi` 5→6
+
+Fixes a chain-order miscount discovered during the 9th-tier
+promotion + chain-5 hunt of 2026-04-27. The PFAFFIAN_NOT_EML_R
+registry assigned `riemann_xi` chain order 5; the chain-order
+additivity rule that's now corpus-validated (28/28 PNE rows hit
+exactly per `monogate-research/exploration/full-corpus-additivity-
+2026-04-27/`) gives chain 6 for `riemann_xi`:
+
+  ξ(s) = (s(s−1)/2) · π^(−s/2) · Γ(s/2) · ζ(s)
+
+The Γ(s/2) contributes chain 2, the ζ(s) contributes chain 4 (T_Lerch
+supertower, also promoted today), and the additivity rule sums to 6.
+Polynomial prefactors and `π^(−s/2)` (a non-integer-exponent power
+treated as +0 chain order at the registry level) don't add.
+
+### Changed
+
+  - **`PFAFFIAN_NOT_EML_R["riemann_xi"]`: 5 → 6.** Aligns with the
+    chain-order additivity rule and the per-row C-207 PNE verification.
+  - Inline docstring expanded to cite the additivity-rule derivation.
+
+### Migration notes
+
+Any code that asserted `eml_cost.analyze(sp.riemann_xi(s)).pfaffian_r == 5`
+will break. The corrected value is 6. This is a SEMVER minor bump
+because the registry's behaviour for `riemann_xi` is now strictly
+more consistent with the documented additivity rule, but downstream
+callers that pinned the old value need a one-line update.
+
+### Source
+
+  - Discovery: `monogate-research/exploration/chain-5-hunt-2026-04-27/`
+    (registry-vs-additivity discrepancy noted)
+  - Confirmation: `monogate-research/exploration/full-corpus-additivity-
+    2026-04-27/` (28/28 PNE rows hit exactly under the additivity rule)
+  - 9th-tier context: `exploration/9th-tower-promotion-2026-04-27/`
+    promoted T_Lerch (chain 4) and T_Mathieu (chain 4) to CONFIRMED;
+    riemann_xi sits in T_Lerch's neighbourhood as a Γ × ζ composite.
+
+---
+
 ## [0.12.0] — 2026-04-27 — `eml-cost lint` pre-commit linter
 
 Surfaces ``estimate_time`` at the source-file level. Scans Python
