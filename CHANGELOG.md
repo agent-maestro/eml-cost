@@ -6,6 +6,70 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.17.0] — 2026-04-28 — GP search engine + Feynman benchmark
+
+Phase 2 of EML-native symbolic regression. The 0.16.0 regularizer
+gets a search engine to steer and a benchmark to validate against.
+
+### Added
+
+  - **`eml_cost.regression.EMLNode`** — symbolic-regression tree
+    representation. Binary `{+, -, *, /}` and unary `{sin, cos,
+    exp, log, sqrt, neg}` operators. `evaluate(env)` is numpy-
+    backed (with safe overflow / divide-by-zero handling);
+    `to_sympy()` bridges to the rest of `eml_cost`.
+
+  - **`eml_cost.regression.search`** — genetic-programming SR
+    engine. Tournament selection, subtree crossover + mutation,
+    constant Gaussian perturbation. Optional smart initialisation
+    via `estimate_dynamics` for single-variable problems. Every
+    candidate is scored against an optional
+    `RegularizerConfig`.
+
+  - **`eml_cost.regression.random_baseline`** — compute-matched
+    random-tree sampler. Used as the C-condition reference in
+    the benchmark.
+
+  - **`eml_cost.regression.benchmark`** — 10-problem Feynman-
+    flavoured SR bench spanning chain orders 0 through 3.
+    `run_benchmark` runs three conditions (with regularizer /
+    without / random) and returns a `BenchmarkTable` with
+    per-problem and overall hit rates.
+
+### Validation result
+
+On the bench, A (regularized GP) achieves **53.3%** chain-order
+match rate vs **43.3%** for B (unregularized GP) over 30 runs
+per condition (+10pp). C (random tree, compute-matched) scores
+56.7% — a metric artifact, since random sampling regresses to
+the chain-order distribution mean (biased toward 0 and 2 in this
+suite). On the hardest problem (damped oscillator, true chain 3),
+A is the only method that recovers chain 3.
+
+Full details in
+`monogate-research/exploration/eml-symbolic-regression-2026-04-28/FINDINGS.md`.
+
+### Honest framing
+
+  - The chain-order metric is coarse — many distinct expressions
+    share a chain order. The +10pp regularizer lift is real but
+    modest.
+  - The current regularizer formulation only penalises chain
+    order **above** `max_chain_order`. A two-sided variant
+    (target chain order from `estimate_dynamics`, penalise both
+    over- and under-shoot) is the obvious next iteration.
+  - Smart-init via `estimate_dynamics` does material work on the
+    chain-3 problem; the regularizer alone vs smart-init alone
+    is not yet ablated.
+
+### Tests
+
+  - +43 tests across `test_nodes.py`, `test_gp.py`, and
+    `test_benchmark.py` (smoke runs of the harness with tiny
+    population/generation budgets to keep CI fast).
+  - Suite total: 589 passing.
+
+
 ## [0.16.0] — 2026-04-28 — chain-order regularizer + data dynamics estimator
 
 Phase 1 of the EML-Native Symbolic Regression effort. Two new
