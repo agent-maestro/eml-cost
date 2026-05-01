@@ -54,6 +54,7 @@ from .lint import Finding, lint_file, lint_source
 from .guards import CostLimitExceeded, costlimit
 from .batch import analyze_batch, cache_hit_analysis
 from .profile import DEFAULT_WEIGHTS, PfaffianProfile
+from .live_profile import LiveProfileResult, live_profile
 from .regularizer import RegularizerConfig, RegularizerResult, regularize
 from .transpile import (
     TranspileResult,
@@ -72,7 +73,7 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.19.0"
+__version__ = "0.20.0"
 
 __all__ = [
     "__version__",
@@ -97,6 +98,8 @@ __all__ = [
     "PFAFFIAN_NOT_EML_R",
     "PfaffianProfile",
     "DEFAULT_WEIGHTS",
+    "LiveProfileResult",
+    "live_profile",
     "analyze_batch",
     "cache_hit_analysis",
     "estimate_time",

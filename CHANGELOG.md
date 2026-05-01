@@ -6,6 +6,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.20.0] — 2026-05-01 — Live profiling: `eml-cost profile`
+
+Closes the prediction loop. Until now eml-cost only **predicted**
+wall-clock and precision-loss; this release adds a measurement
+mode that lambdifies the expression, runs it, and reports
+predicted-vs-measured side-by-side.
+
+### Added
+
+  - **`eml_cost.live_profile.live_profile(expr)`** — measures
+    actual lambdify wall-clock, per-call evaluation ns, peak heap
+    KiB (via tracemalloc), and float64 max-relerr against an
+    mpmath oracle (default 50 dps). Returns a frozen
+    :class:`LiveProfileResult` with both measured *and* predicted
+    fields (predictions come from the existing `estimate_time`
+    + `predict_precision_loss` models).
+
+  - **`eml-cost profile EXPR`** CLI subcommand. Pretty-print or
+    `--json`. Tunable via `--samples`, `--eval-repeats`, `--seed`,
+    `--sample-lo/hi`, `--mpmath-dps`. Reads from stdin or a file
+    via `--file`.
+
+### How to use
+
+```sh
+$ eml-cost profile "exp(x) + log(x) + sin(x*y)"
+=== exp(x) + log(x) + sin(x*y) ===
+  free vars: x, y    samples=64  eval_repeats=1000
+
+  WALL-CLOCK (lambdify, ms):
+    predicted        0.510   CI95 [   0.353,      0.736]
+    measured        37.340
+
+  EVAL (per call, ns):
+    measured        1396.0
+
+  MEMORY (peak, KiB):
+    measured         911.3
+
+  PRECISION (float64 vs mpmath oracle):
+    predicted relerr     2.61e-15   digits_lost 1.07
+    measured relerr      1.30e-16   digits_lost 0.00
+```
+
+The lambdify-wall-clock gap (predicted ~0.5 ms vs measured 37 ms)
+is the cold-import overhead — the prediction model trained on
+warm-cache invocations. Numerics-side, the measurement is
+typically tighter than the predicted upper bound, which is the
+expected direction.
+
 ## [0.19.0] — 2026-04-28 — Tool 5: EML → Python/NumPy/SymPy/C transpiler
 
 First ship of the LLM-native EML tools roadmap (see

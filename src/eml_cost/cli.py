@@ -551,6 +551,64 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Emit JSON instead of pretty text.",
     )
 
+    # profile -------------------------------------------------------------
+    pp = sub.add_parser(
+        "profile",
+        help=("Lambdify + run an expression live. Measures actual "
+              "wall-clock, peak memory, and float64 relerr; prints "
+              "predicted vs measured side-by-side."),
+    )
+    pp.add_argument(
+        "expr",
+        nargs="*",
+        help="SymPy expression(s); use --file - to read stdin.",
+    )
+    pp.add_argument(
+        "--file",
+        help="Read one expression per line from PATH (- for stdin).",
+    )
+    pp.add_argument(
+        "--samples",
+        type=int,
+        default=64,
+        help="Random sample points for relerr measurement (default 64).",
+    )
+    pp.add_argument(
+        "--eval-repeats",
+        type=int,
+        default=1000,
+        help="Number of timed evaluations (default 1000).",
+    )
+    pp.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="Sampler seed (default 0).",
+    )
+    pp.add_argument(
+        "--sample-lo",
+        type=float,
+        default=0.5,
+        help="Lower bound for uniform sampler (default 0.5).",
+    )
+    pp.add_argument(
+        "--sample-hi",
+        type=float,
+        default=1.5,
+        help="Upper bound for uniform sampler (default 1.5).",
+    )
+    pp.add_argument(
+        "--mpmath-dps",
+        type=int,
+        default=50,
+        help="Oracle decimal precision (default 50).",
+    )
+    pp.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON instead of pretty text.",
+    )
+
     # version -------------------------------------------------------------
     sub.add_parser("version", help="Print eml-cost version + trilogy summary.")
 
@@ -571,11 +629,90 @@ def main(argv: Sequence[str] | None = None, *, out: TextIO | None = None) -> int
         return _cmd_lint(args, out=target_out)
     if args.cmd == "regress":
         return _cmd_regress(args, out=target_out)
+    if args.cmd == "profile":
+        return _cmd_profile(args, out=target_out)
     if args.cmd == "version":
         return _cmd_version(args, out=target_out)
 
     parser.print_help()
     return EXIT_USAGE
+
+
+def _cmd_profile(args: argparse.Namespace, *, out: TextIO) -> int:
+    """eml-cost profile EXPR — live wall-clock + memory + relerr."""
+    from .live_profile import live_profile
+
+    exprs = _gather_exprs(args)
+    if not exprs:
+        print("error: no expressions provided", file=sys.stderr)
+        return EXIT_USAGE
+
+    results: list[dict[str, object]] = []
+    parse_errors: list[tuple[str, str]] = []
+    for s in exprs:
+        try:
+            r = live_profile(
+                s,
+                samples=args.samples,
+                eval_repeats=args.eval_repeats,
+                seed=args.seed,
+                sample_lo=args.sample_lo,
+                sample_hi=args.sample_hi,
+                mpmath_dps=args.mpmath_dps,
+            )
+            results.append(r.to_dict())
+        except (sp.SympifyError, SyntaxError, TypeError, ValueError) as exc:
+            parse_errors.append((s, str(exc)))
+
+    if args.json:
+        payload: dict[str, object] = {
+            "version": __version__,
+            "results": results,
+            "parse_errors": [
+                {"expr": pe_expr, "error": pe_msg}
+                for pe_expr, pe_msg in parse_errors
+            ],
+        }
+        json.dump(payload, out, indent=2)
+        out.write("\n")
+    else:
+        for r in results:
+            out.write(_format_profile(r))
+            out.write("\n")
+        for pe_expr, pe_msg in parse_errors:
+            out.write(f"=== {pe_expr} ===\n  PARSE ERROR: {pe_msg}\n")
+
+    if parse_errors and not args.json:
+        return EXIT_PARSE_ERROR
+    return EXIT_OK
+
+
+def _format_profile(r: dict[str, object]) -> str:
+    """Pretty-print a LiveProfileResult dict."""
+    lo, hi = r["predicted_lambdify_ci95"]  # type: ignore[index]
+    lines: list[str] = [
+        f"=== {r['expr']} ===",
+        f"  free vars: {', '.join(r['free_vars']) or '(none)'}  "
+        f"  samples={r['samples']}  eval_repeats={r['eval_repeats']}",
+        "",
+        "  WALL-CLOCK (lambdify, ms):",
+        f"    predicted   {float(r['predicted_lambdify_ms']):>10.3f}"
+        f"   CI95 [{float(lo):>8.3f}, {float(hi):>10.3f}]",
+        f"    measured    {float(r['actual_lambdify_ms']):>10.3f}",
+        "",
+        "  EVAL (per call, ns):",
+        f"    measured    {float(r['actual_eval_ns_per_call']):>10.1f}",
+        "",
+        "  MEMORY (peak, KiB):",
+        f"    measured    {float(r['peak_kib']):>10.1f}",
+        "",
+        "  PRECISION (float64 vs mpmath oracle):",
+        f"    predicted relerr     {float(r['predicted_relerr']):.2e}"
+        f"   digits_lost {float(r['predicted_digits_lost']):.2f}",
+        f"    measured relerr      {float(r['relerr_max']):.2e}"
+        f"   digits_lost {float(r['digits_lost_actual']):.2f}",
+    ]
+    return "\n".join(lines)
 
 
 _SEV_ORDER = {"info": 0, "warn": 1, "error": 2}
