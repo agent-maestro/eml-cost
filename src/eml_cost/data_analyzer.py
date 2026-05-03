@@ -183,11 +183,24 @@ def _detect_oscillations(
     if n < 8:
         return [], 0.0
 
-    # Detrend (remove linear trend so a pure decay doesn't masquerade
-    # as a low-frequency oscillation).
+    # Detrend with a low-degree polynomial (degree 3, not 1).
+    # Linear detrending leaves curvature in the FFT input — for
+    # monotone-nonlinear inputs (quadratic, exponential decay,
+    # pendulum sqrt) the leftover curvature reads as a spurious
+    # low-frequency oscillation, inflating estimated_chain_order.
+    # Degree 3 captures up to a cubic envelope; oscillations of
+    # interest are higher-frequency than that.
+    # (Earlier mitigation: the extrema-count gate in v0.18.0
+    # already filters most of these cases. This change is a
+    # second line of defense for shapes that pass the extrema
+    # gate but still carry curvature, per the v2 SymReg
+    # benchmark falsification — see exploration/eml-symbolic-
+    # regression-2026-04-28-v2/FINDINGS.md.)
     idx = np.arange(n)
-    coeffs = np.polyfit(idx, y, 1)
-    detrended = y - (coeffs[0] * idx + coeffs[1])
+    detrend_deg = 3 if n >= 16 else 1
+    coeffs = np.polyfit(idx, y, detrend_deg)
+    trend = np.polyval(coeffs, idx)
+    detrended = y - trend
 
     # Window to reduce spectral leakage.
     window = np.hanning(n)
