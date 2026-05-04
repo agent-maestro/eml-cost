@@ -1,6 +1,7 @@
 """Tests for eml_graph.build_graph and the EquivalenceGraph data shape."""
 from __future__ import annotations
 
+import pytest
 import sympy as sp
 
 from eml_cost.graph import (
@@ -102,6 +103,7 @@ def test_members_of_unknown_axes_returns_empty_list():
     assert g.members_of("p99-d99-w99-c99") == []
 
 
+@pytest.mark.skip(reason="requires eml_rewrite — not yet published")
 def test_find_path_between_equivalent_expressions():
     """Two equivalent sigmoid forms (textbook vs canonical) sit in
     DIFFERENT cost classes — the canonical form has lower depth via

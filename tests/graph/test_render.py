@@ -1,6 +1,7 @@
 """Tests for eml_graph.render.to_dot."""
 from __future__ import annotations
 
+import pytest
 import sympy as sp
 
 from eml_cost.graph import build_graph, to_dot
@@ -38,6 +39,7 @@ def test_to_dot_emits_one_node_line_per_node():
     assert declared == g.num_nodes()
 
 
+@pytest.mark.skip(reason="requires eml_rewrite — not yet published")
 def test_to_dot_with_edges_includes_edge_lines_for_equivalent_pair():
     """Sigmoid pair: textbook ↔ canonical are equivalent and in the
     same class — to_dot(include_edges=True) must emit at least one

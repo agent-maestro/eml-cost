@@ -117,6 +117,7 @@ def test_render_witness_html_low_severity_color_on_canonical_sigmoid():
     assert "1f3a1f" in h    # low-severity bg color
 
 
+@pytest.mark.skip(reason="requires eml_rewrite — not yet published")
 def test_render_witness_html_includes_canonical_path_for_textbook_sigmoid():
     w = universality_witness(sp.exp(x) / (1 + sp.exp(x)))
     h = render_witness_html(w)

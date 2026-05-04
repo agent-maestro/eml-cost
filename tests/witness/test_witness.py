@@ -40,6 +40,7 @@ def test_witness_for_canonical_sigmoid():
     assert "Universality.lean" in w.lean_url
 
 
+@pytest.mark.skip(reason="requires eml_rewrite — not yet published")
 def test_witness_for_textbook_sigmoid_walks_to_canonical():
     """Textbook sigmoid (cost 3) has a known 1-step canonical
     rewrite — witness should record the path + savings."""
@@ -52,6 +53,7 @@ def test_witness_for_textbook_sigmoid_walks_to_canonical():
     assert w.savings >= 1
 
 
+@pytest.mark.skip(reason="requires eml_rewrite — not yet published")
 def test_witness_for_pythagorean_collapses_to_one():
     w = universality_witness(sp.sin(x) ** 2 + sp.cos(x) ** 2)
     # Should rewrite to S.One, with savings ≥ 0.
