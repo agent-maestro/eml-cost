@@ -10,13 +10,19 @@ import re
 import pytest
 import sympy as sp
 
-from eml_cost.jupyter import (
+# Every formatter test renders a `universality_witness`, which
+# transitively needs `eml_discover` (identify) and `eml_rewrite`
+# (canonical-path walk). Both are unpublished — skip the file.
+pytest.importorskip("eml_discover", reason="not yet on PyPI")
+pytest.importorskip("eml_rewrite", reason="not yet on PyPI")
+
+from eml_cost.jupyter import (  # noqa: E402 -- after importorskip
     install_display_formatter,
     render_witness_html,
     render_witness_text,
     uninstall_display_formatter,
 )
-from eml_cost.witness import universality_witness
+from eml_cost.witness import universality_witness  # noqa: E402
 
 
 x = sp.Symbol("x")
@@ -117,7 +123,6 @@ def test_render_witness_html_low_severity_color_on_canonical_sigmoid():
     assert "1f3a1f" in h    # low-severity bg color
 
 
-@pytest.mark.skip(reason="requires eml_rewrite — not yet published")
 def test_render_witness_html_includes_canonical_path_for_textbook_sigmoid():
     w = universality_witness(sp.exp(x) / (1 + sp.exp(x)))
     h = render_witness_html(w)

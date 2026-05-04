@@ -13,8 +13,12 @@ from typing import Any, Callable
 import sympy as sp
 
 from eml_cost import analyze, fingerprint, fingerprint_axes
-from eml_discover import identify
 from eml_cost.witness import universality_witness, witness_to_dict
+
+# `eml_discover` is imported lazily inside cmd_identify (and inside
+# the FORMULAS callsite further down). Keeping it out of module scope
+# means CLI subcommands that don't touch the formula registry still
+# import cleanly when eml_discover isn't installed.
 
 
 __all__ = [
@@ -89,6 +93,7 @@ def cmd_analyze(args: argparse.Namespace) -> int:
 
 
 def cmd_identify(args: argparse.Namespace) -> int:
+    from eml_discover import identify
     expr = _parse_expr(args.expr)
     matches = identify(expr, max_results=args.max)
     if not matches:

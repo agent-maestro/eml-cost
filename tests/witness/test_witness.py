@@ -6,7 +6,15 @@ import json
 import pytest
 import sympy as sp
 
-from eml_cost.witness import (
+# `universality_witness` lazily imports `eml_discover` and the
+# rewrite walk uses `eml_rewrite`. Neither is on PyPI yet
+# (eml_discover lives in monogate-research; eml_rewrite is
+# blocked by a circular dep — it already declares
+# eml-cost>=0.1.0a0). Skip the whole file until both publish.
+pytest.importorskip("eml_discover", reason="not yet on PyPI")
+pytest.importorskip("eml_rewrite", reason="not yet on PyPI")
+
+from eml_cost.witness import (  # noqa: E402 -- after importorskip
     UniversalityWitness,
     WitnessIdentified,
     WitnessProfile,
@@ -40,7 +48,6 @@ def test_witness_for_canonical_sigmoid():
     assert "Universality.lean" in w.lean_url
 
 
-@pytest.mark.skip(reason="requires eml_rewrite — not yet published")
 def test_witness_for_textbook_sigmoid_walks_to_canonical():
     """Textbook sigmoid (cost 3) has a known 1-step canonical
     rewrite — witness should record the path + savings."""
@@ -53,7 +60,6 @@ def test_witness_for_textbook_sigmoid_walks_to_canonical():
     assert w.savings >= 1
 
 
-@pytest.mark.skip(reason="requires eml_rewrite — not yet published")
 def test_witness_for_pythagorean_collapses_to_one():
     w = universality_witness(sp.sin(x) ** 2 + sp.cos(x) ** 2)
     # Should rewrite to S.One, with savings ≥ 0.

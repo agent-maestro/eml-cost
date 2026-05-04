@@ -25,8 +25,14 @@ from typing import Any
 import sympy as sp
 
 from eml_cost import analyze, fingerprint, fingerprint_axes
-from eml_discover import identify
 from eml_cost.rewrite import path as walk_path
+
+# `eml_discover` is imported lazily inside the function that uses it
+# (see below). Keeping it out of module scope means importers of
+# `eml_cost.witness` don't pay an ImportError when eml_discover isn't
+# installed -- the witness pipeline only needs it at call time, and
+# this matches the lazy-import pattern already used in
+# eml_cost.graph.build for the same package.
 
 
 __all__ = [
@@ -238,7 +244,8 @@ def universality_witness(
         axes=axes,
     )
 
-    matches = identify(parsed, max_results=1)
+    from eml_discover import identify as _identify
+    matches = _identify(parsed, max_results=1)
     identified: WitnessIdentified | None = None
     if matches:
         m = matches[0]
