@@ -179,21 +179,35 @@ def _effective_r(expr: sp.Basic, fname: str) -> int:
     """Return the chain-order weight to use for ``expr`` whose AST
     head name is ``fname``.
 
-    Defaults to :data:`PFAFFIAN_NOT_EML_R` lookup. The single special
-    case is ``polylog(n, x)``: structurally Li_n is iterated-Liouvillian
-    with chain n (Li_1 = -log(1-x) is chain 1; Li_n = ∫ Li_{n-1}/t dt
-    is one log + n-1 antiderivative steps). The registry default of 3
-    was a C237-era over-approximation that lumped polylog with the
-    genuinely-non-Liouvillian Bessel/Airy bucket.
+    Defaults to :data:`PFAFFIAN_NOT_EML_R` lookup. Special cases:
 
-    For non-integer or symbolic ``n`` the registry default of 3 is
-    preserved (a safe over-approximation matching the legacy behavior).
+      - ``polylog(n, x)``: structurally Li_n is iterated-Liouvillian
+        with chain n (Li_1 = -log(1-x) is chain 1; Li_n = ∫ Li_{n-1}/t dt
+        is one log + n-1 antiderivative steps). The registry default of 3
+        was a C237-era over-approximation that lumped polylog with the
+        genuinely-non-Liouvillian Bessel/Airy bucket.
+      - ``mathieuc(a, q, x)`` / ``mathieus(a, q, x)`` etc. with
+        ``q == 0``: Mathieu's equation reduces to y'' + a y = 0 whose
+        solutions are sin/cos of √a x — chain 2 (one sin/cos pair),
+        not the registry's chain 4. Surfaced 2026-05-10 by the
+        Frontier_E_floquet_recalibrated probe in monogate-research.
+        For ``q != 0`` (or symbolic q), the registry default of 4 is
+        preserved.
+
+    For non-integer or symbolic parameters in any of the above, the
+    registry default is preserved (a safe over-approximation matching
+    the legacy behavior).
     """
     r_value = PFAFFIAN_NOT_EML_R[fname]
     if fname == "polylog" and len(expr.args) >= 1:
         n = expr.args[0]
         if n.is_Integer and int(n) >= 1:
             return int(n)
+    if fname in {"mathieuc", "mathieus", "mathieucprime", "mathieusprime"}:
+        if len(expr.args) >= 2:
+            q_arg = expr.args[1]
+            if q_arg == 0:
+                return 2
     return r_value
 
 
