@@ -175,6 +175,28 @@ def _is_registered_pne(sub: sp.Basic) -> bool:
     return True
 
 
+def _effective_r(expr: sp.Basic, fname: str) -> int:
+    """Return the chain-order weight to use for ``expr`` whose AST
+    head name is ``fname``.
+
+    Defaults to :data:`PFAFFIAN_NOT_EML_R` lookup. The single special
+    case is ``polylog(n, x)``: structurally Li_n is iterated-Liouvillian
+    with chain n (Li_1 = -log(1-x) is chain 1; Li_n = ∫ Li_{n-1}/t dt
+    is one log + n-1 antiderivative steps). The registry default of 3
+    was a C237-era over-approximation that lumped polylog with the
+    genuinely-non-Liouvillian Bessel/Airy bucket.
+
+    For non-integer or symbolic ``n`` the registry default of 3 is
+    preserved (a safe over-approximation matching the legacy behavior).
+    """
+    r_value = PFAFFIAN_NOT_EML_R[fname]
+    if fname == "polylog" and len(expr.args) >= 1:
+        n = expr.args[0]
+        if n.is_Integer and int(n) >= 1:
+            return int(n)
+    return r_value
+
+
 # ---------------------------------------------------------------------------
 # Pfaffian-but-not-EML detection
 # ---------------------------------------------------------------------------
@@ -244,7 +266,7 @@ def _collect_chain(expr: sp.Basic, chains: set[sp.Basic]) -> None:
 
     fname = getattr(func, "__name__", "")
     if fname in PFAFFIAN_NOT_EML_R and _is_registered_pne(expr):
-        r_value = PFAFFIAN_NOT_EML_R[fname]
+        r_value = _effective_r(expr, fname)
         for i in range(r_value):
             chains.add(sp.Symbol(f"__chain_{fname}_{i}_{hash(expr) % 10**9}"))
 
@@ -374,7 +396,7 @@ def predict_chain_order_via_additivity(expr: sp.Basic) -> int:
         # CLASS PNE — registered Pfaffian-not-elementary primitive.
         fname = getattr(func, "__name__", "")
         if fname in PFAFFIAN_NOT_EML_R and _is_registered_pne(node):
-            add_chain(node, PFAFFIAN_NOT_EML_R[fname])
+            add_chain(node, _effective_r(node, fname))
             continue
 
         # Add / Mul / generic container — CLASS 0 (no contribution)
@@ -428,7 +450,7 @@ def max_path_r(expr: sp.Basic) -> int:
 
     fname = getattr(func, "__name__", "")
     if fname in PFAFFIAN_NOT_EML_R:
-        r_value = PFAFFIAN_NOT_EML_R[fname]
+        r_value = _effective_r(expr, fname)
         if expr.args:
             return r_value + max(
                 (max_path_r(a) for a in expr.args if isinstance(a, sp.Basic)),

@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.20.1] — 2026-05-10 — polylog calibration: `Li_n` is chain `n`
+
+### Fixed
+
+  - **`polylog(n, x)` for positive integer `n`** now reports chain `n`
+    instead of the C237-era registry default of 3. Structurally
+    `Li_1 = -log(1-x)` is chain 1; `Li_n = ∫ Li_{n-1}(t)/t dt` for
+    `n ≥ 2` is one log + `n-1` antiderivative steps, so `chain(Li_n)
+    = n`. The old default lumped polylog with the genuinely-non-
+    Liouvillian Bessel/Airy bucket; surfaced 2026-05-10 by the
+    `Frontier_C_hypergeometric_chain` probe in monogate-research,
+    where `₃F₂(1, 1, 1; 2, 2; x) = Li_2(x)/x` reported chain 3
+    instead of the structurally-correct chain 2.
+  - For symbolic / non-integer `n`, the legacy registry default of 3
+    is preserved (safe over-approximation; we can't read the value
+    of `n` to know better).
+  - Affects `predict_chain_order_via_additivity`, `pfaffian_r`, and
+    `max_path_r` (one shared `_effective_r` helper, all three sites
+    routed through it).
+  - 559 existing tests pass; new
+    `test_polylog_chain_tracks_order_n` covers `n ∈ {1, 2, 3, 5, 10}`,
+    the symbolic-`n` fallback, and the `₃F₂(1,1,1;2,2;x)` reduction
+    sanity.
+
 ## [0.20.0] — 2026-05-01 — Live profiling: `eml-cost profile`
 
 Closes the prediction loop. Until now eml-cost only **predicted**
