@@ -575,3 +575,54 @@ color_science,sRGB transfer 5/12,C_lin**(5/12),p1-d1-w0-c0,1,1,0,0,0,0,0,color_s
 color_science,HSL to R,L + S*cos(H),p2-d5-w1-c1,2,5,1,1,0,0,0,color_science_subdomain_2026_04_27
 color_science,HSL to G,L - S*cos(H + pi/3),p2-d7-w1-c1,2,7,1,1,0,0,0,color_science_subdomain_2026_04_27
 color_science,McCamy CCT polynomial,449*n_mc**3 + 3525*n_mc**2 + 68233*n_mc/10 + 552033/100,p0-d3-w0-c0,0,3,0,0,0,0,0,color_science_subdomain_2026_04_27
+ml-act,softplus,log(1 + exp(x)),p2-d1-w2-c0,2,1,2,0,0,1,0,C-253 ml-act augmentation
+ml-act,mish,x*tanh(log(1 + exp(x))),p3-d3-w3-c0,3,3,3,0,0,0,0,C-253 ml-act augmentation
+ml-act,GELU tanh approx,x*0.5*(1 + tanh(sqrt(2/pi)*(x + 0.044715*x**3))),p2-d7-w2-c0,2,7,2,0,0,0,0,C-253 ml-act augmentation
+ml-act,swish-1.5,x/(1 + exp(-1.5*x)),p1-d3-w1-c0,1,3,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,swish-2,x/(1 + exp(-2*x)),p1-d3-w1-c0,1,3,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,ELU,exp(x) - 1,p1-d2-w1-c0,1,2,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,SELU neg branch,1.6733*(exp(x) - 1),p1-d3-w1-c0,1,3,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,tanhshrink,x - tanh(x),p1-d3-w1-c0,1,3,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,softsign,x/(1 + Abs(x)),p0-d4-w0-c0,0,4,0,0,0,0,0,C-253 ml-act augmentation
+ml-act,ISRU,x/sqrt(1 + x**2),p1-d5-w1-c0,1,5,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,logsigmoid,-log(1 + exp(-x)),p2-d3-w2-c0,2,3,2,0,0,0,0,C-253 ml-act augmentation
+ml-act,scaled_sigmoid,2/(1 + exp(-x)) - 1,p1-d3-w1-c0,1,3,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,lipschitz_tanh,tanh(x/2),p1-d3-w1-c0,1,3,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,tanh_quad_warp,tanh(x*(1 + x**2/8)),p1-d5-w1-c0,1,5,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,rat_squareplus,(x + sqrt(x**2 + 4))/2,p1-d5-w1-c0,1,5,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,isigmoid,x/(2*sqrt(1 + x**2)) + 0.5,p1-d7-w1-c0,1,7,1,0,0,0,0,C-253 ml-act augmentation
+ml-act,snake-1,x + sin(x)**2,p2-d5-w2-c1,2,5,2,1,0,0,0,C-253 ml-act augmentation
+ml-act,Pade tanh [2/2],(x*(27 + x**2))/(27 + 9*x**2),p0-d5-w0-c0,0,5,0,0,0,0,0,C-253 ml-act augmentation
+ml-act,expsigmoid Gompertz,1 - exp(-exp(x)),p2-d5-w2-c0,2,5,2,0,0,0,0,C-253 ml-act augmentation
+ml-loss,Huber-smooth,sqrt(x**2 + 0.01) - 0.1,p1-d4-w1-c0,1,4,1,0,0,0,0,C-253 ml-act augmentation
+ml-loss,log_cosh,log((exp(x) + exp(-x))/2),p3-d5-w2-c0,3,5,2,0,0,0,0,C-253 ml-act augmentation
+ml-norm,RMS-norm proxy,x/sqrt(x**2 + 1e-6),p1-d5-w1-c0,1,5,1,0,0,0,0,C-253 ml-act augmentation
+plasma,Plasma frequency,sqrt(n*e**2/(eps0*me)),p1-d4-w1-c0,1,4,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Debye length,sqrt(eps0*kB*T/(n*e**2)),p1-d5-w1-c0,1,5,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Larmor radius,m*v_perp/(q*B),p0-d3-w0-c0,0,3,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Cyclotron freq,q*B/m,p0-d2-w0-c0,0,2,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Bohm diffusion,kB*T/(16*q*B),p0-d3-w0-c0,0,3,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Spitzer resistivity,m*e**2/(sigma_e*kB*T**(3/2)),p1-d6-w1-c0,1,6,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Coulomb log,log(12*pi*n*lam_d**3),p1-d3-w1-c0,1,3,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Alfven velocity,B/sqrt(mu0*rho),p1-d4-w1-c0,1,4,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Magnetosonic v,sqrt(va**2 + cs**2),p1-d3-w1-c0,1,3,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Drift velocity,E/B,p0-d2-w0-c0,0,2,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Mean free path,1/(n*sigma),p0-d3-w0-c0,0,3,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Cross section,pi*r0**2*log(rho_max/rho_min),p1-d4-w1-c0,1,4,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Beta plasma,n*kB*T/(B**2/(2*mu0)),p0-d5-w0-c0,0,5,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Hall parameter,omega_c*tau,p0-d1-w0-c0,0,1,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Magnetic Reynolds,v*L*sigma*mu0,p0-d1-w0-c0,0,1,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Plasma parameter,n*lam_d**3,p0-d2-w0-c0,0,2,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Bremsstrahlung pwr,C*n_e*n_i*Z**2*sqrt(T),p1-d2-w1-c0,1,2,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Ohmic heating,j**2/sigma,p0-d2-w0-c0,0,2,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Ion acoustic speed,sqrt(kB*(Te + 3*Ti)/m),p1-d4-w1-c0,1,4,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Fokker-Planck nu,v_th**3/(b**2*log_lam),p0-d4-w0-c0,0,4,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Saha ionization,(2*pi*me*kB*T/h**2)**(3/2)*exp(-eps_i/(kB*T)),p2-d5-w1-c0,2,5,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Rosseland opacity,256*pi**4*kB**4*T**3/(15*c**2*h**3),p0-d4-w0-c0,0,4,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Bremsstrahlung x,exp(-h*nu/(kB*T)),p1-d4-w1-c0,1,4,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Tokamak safety q,r*B_t/(R*B_p),p0-d3-w0-c0,0,3,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Spitzer conductvty,T**(3/2)/(Z*log_lam),p1-d4-w1-c0,1,4,1,0,0,0,0,C-259 plasma cross-genome
+plasma,Cyclotron radiation,P*B**4/(c**3*me**2),p0-d4-w0-c0,0,4,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Inverse aspect r,a/R,p0-d2-w0-c0,0,2,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Lawson criterion,n*tau_E*T,p0-d1-w0-c0,0,1,0,0,0,0,0,C-259 plasma cross-genome
+plasma,Pinch beta,8*pi*n*kB*T/B**2,p0-d3-w0-c0,0,3,0,0,0,0,0,C-259 plasma cross-genome

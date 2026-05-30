@@ -28,9 +28,11 @@ def test_corpus_size_at_least_500() -> None:
     assert n >= 500, f"corpus_size() = {n}, expected >= 500"
 
 
-def test_corpus_size_at_most_580() -> None:
-    """Corpus should ship with at most 578 rows (some skipped at build)."""
-    assert corpus_size() <= 578
+def test_corpus_size_at_most_650() -> None:
+    """Corpus should ship with at most ~650 rows; expanded by genome-corpus
+    augmentation 2026-05-06 (+22 ml-act + 29 plasma cross-genome rows from
+    the C-253 / C-259 monogate-research workstreams)."""
+    assert corpus_size() <= 650
 
 
 def test_corpus_domains_returns_sorted_tuple() -> None:

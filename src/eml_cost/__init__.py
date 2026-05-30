@@ -73,7 +73,7 @@ from .core import (
     structural_overhead,
 )
 
-__version__ = "0.20.0"
+__version__ = "0.20.2"
 
 __all__ = [
     "__version__",

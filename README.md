@@ -1,6 +1,6 @@
 # eml-cost
 
-**Stable beta. Patent pending.** Source-available; see LICENSE.
+**Stable beta.** Source-available; see LICENSE.
 
 Pfaffian chain order and EML routing depth for symbolic expressions —
 a programmatic complexity measure on SymPy expression trees.
