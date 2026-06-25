@@ -36,6 +36,9 @@ __all__ = ["NonOscillationCertificate", "certify_non_oscillation"]
 
 _x = sp.Symbol("x", real=True)
 _LEAN_THEOREM = "MachLib.SturmNonOscillation.sturm_no_positive_bump"
+# Companion (negative orientation); together they forbid a sign-definite arch of
+# either orientation, the complete "no oscillation arch" backing.
+_LEAN_THEOREM_NEG = "MachLib.SturmNonOscillation.sturm_no_negative_bump"
 
 
 @dataclass(frozen=True)
@@ -107,10 +110,12 @@ def certify_non_oscillation(
             certified=True,
             eml_class=res.eml_class,
             property=("no oscillation / bounded zeros: solutions of u''=r·u have no "
-                      "positive arch between two zeros, hence finitely many zeros"),
+                      "sign-definite arch (either orientation) between two zeros, "
+                      "hence finitely many zeros"),
             lean_theorem=_LEAN_THEOREM,
-            condition=f"r = {sp.nsimplify(r)} >= 0 on {domain} "
-                      f"(Sturm sufficient condition, machine-checked, no sorryAx)",
+            condition=f"r = {sp.nsimplify(r)} >= 0 on {domain} (Sturm sufficient "
+                      f"condition, machine-checked: {_LEAN_THEOREM} + "
+                      f"{_LEAN_THEOREM_NEG}, no sorryAx)",
             domain=domain,
         )
     return NonOscillationCertificate(
