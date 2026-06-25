@@ -50,6 +50,7 @@ from .recommend_form import (
 )
 from .dynamics import DynamicsProfile, analyze_dynamics
 from .classify_ode import OdeClass, classify_ode
+from .certificate import NonOscillationCertificate, certify_non_oscillation
 from .lint_ode import OdeFinding, format_ode_findings, lint_ode, lint_odes
 from .validate_pne_registry import (
     REGISTRY_ODES,
@@ -125,6 +126,8 @@ __all__ = [
     "DynamicsProfile",
     "classify_ode",
     "OdeClass",
+    "certify_non_oscillation",
+    "NonOscillationCertificate",
     "lint_ode",
     "lint_odes",
     "OdeFinding",
