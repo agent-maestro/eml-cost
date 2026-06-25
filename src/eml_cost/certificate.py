@@ -39,6 +39,9 @@ _LEAN_THEOREM = "MachLib.SturmNonOscillation.sturm_no_positive_bump"
 # Companion (negative orientation); together they forbid a sign-definite arch of
 # either orientation, the complete "no oscillation arch" backing.
 _LEAN_THEOREM_NEG = "MachLib.SturmNonOscillation.sturm_no_negative_bump"
+# Regular-singular −1/4 case (Euler r = c/x² with −1/4 ≤ c < 0): non-oscillatory
+# even though r < 0. Covered by the dedicated Euler theorem.
+_LEAN_THEOREM_EULER = "MachLib.SturmNonOscillation.sturm_euler_no_positive_bump"
 
 
 @dataclass(frozen=True)
@@ -89,6 +92,18 @@ def _nonneg_on_domain(r: sp.Expr, domain: str) -> bool:
     return False                            # not provably nonneg here
 
 
+def _euler_c(r: sp.Expr):
+    """Return the constant ``c`` if ``r = c/x^2`` (Euler / regular-singular form),
+    else ``None``. When ``classify_ode`` already returned ``EML-finite``, such an
+    ``r`` is non-oscillatory, so ``c >= -1/4`` (a real ``α = ½ ± √(c+¼)`` exists)
+    — exactly the hypothesis of ``sturm_euler_no_positive_bump``."""
+    r = sp.simplify(r)
+    if not r.free_symbols:                  # constant r is the non-Euler case
+        return None
+    rx2 = sp.simplify(r * _x**2)
+    return rx2 if not rx2.free_symbols else None
+
+
 def certify_non_oscillation(
     p: Union[sp.Expr, str, int],
     q: Union[sp.Expr, str, int],
@@ -99,7 +114,10 @@ def certify_non_oscillation(
     Returns ``None`` when the function is EML-infinity (oscillatory) or a
     non-definitive candidate — there is no non-oscillation property to certify.
     Otherwise returns a :class:`NonOscillationCertificate`; ``certified`` is
-    ``True`` exactly when ``r >= 0`` (the machine-checked Sturm hypothesis) holds.
+    ``True`` when the normal-form ``r`` is in a Lean-covered shape — ``r >= 0``
+    (``sturm_no_positive_bump``) or Euler ``r = c/x²`` with ``c >= -1/4``
+    (``sturm_euler_no_positive_bump``, the regular-singular band) — both
+    machine-checked, no sorryAx.
     """
     res = classify_ode(p, q, domain)
     if res.eml_class != "EML-finite":
@@ -118,14 +136,28 @@ def certify_non_oscillation(
                       f"{_LEAN_THEOREM_NEG}, no sorryAx)",
             domain=domain,
         )
+    c = _euler_c(r)
+    if c is not None:
+        # Euler r = c/x²; EML-finite ⇒ c ≥ -1/4 ⇒ a real α = ½±√(c+¼) exists,
+        # the hypothesis of the dedicated Euler theorem. Now machine-checked.
+        return NonOscillationCertificate(
+            certified=True,
+            eml_class=res.eml_class,
+            property=("no oscillation / bounded zeros: the regular-singular Euler "
+                      "equation has no positive arch between two zeros"),
+            lean_theorem=_LEAN_THEOREM_EULER,
+            condition=f"r = {sp.nsimplify(r)} = c/x² with c = {sp.nsimplify(c)} >= -1/4 "
+                      f"(real α = 1/2 ± sqrt(c+1/4) exists; machine-checked: "
+                      f"{_LEAN_THEOREM_EULER}, no sorryAx)",
+            domain=domain,
+        )
     return NonOscillationCertificate(
         certified=False,
         eml_class=res.eml_class,
-        property="non-oscillatory by the regular-singular -1/4 threshold",
+        property="non-oscillatory (not in a Lean-covered shape)",
         lean_theorem=None,
-        condition=f"r = {sp.nsimplify(r)} is not >= 0",
+        condition=f"r = {sp.nsimplify(r)} is neither >= 0 nor of Euler form c/x²",
         domain=domain,
-        note=("non-oscillation holds by the sharper Sturm comparison near a regular "
-              "singular point (threshold -1/4), not covered by sturm_no_positive_bump "
-              "(which requires r >= 0) — not yet Lean-certified"),
+        note=("non-oscillation holds but r is not in a shape the current Lean "
+              "theorems cover (r >= 0, or Euler c/x²) — not yet Lean-certified"),
     )

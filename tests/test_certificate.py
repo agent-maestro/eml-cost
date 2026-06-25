@@ -52,17 +52,16 @@ def test_candidate_has_no_certificate():
     assert certify_non_oscillation(1 / x, -(1 + 4 / x**2), "pos") is None
 
 
-def test_eml_finite_but_r_negative_is_not_certified():
-    # Euler with r = c/x², -1/4 <= c < 0: non-oscillatory but r < 0.
-    # Pick indicial disc in [0,1) so r = (disc-1)/(4) /x² is negative but EML-finite.
-    # a=1,b=3/16 -> indicial r²+0r+3/16, disc = -3/4 < 0 -> oscillatory (skip).
-    # Use a=1, b=3/16 is complex; instead choose real-root Euler with c<0:
-    # want disc>=0 and c=(disc-1)/4 <0 -> disc<1. a=1, b=3/16: disc=-3/4 (no).
-    # a=1, b=1/8: disc = 0 - 4*(1/8) = -1/2 (<0). Hmm equidim needs (a-1)²-4b>=0.
-    # Take a=2, b=3/16: (a-1)²-4b = 1 - 3/4 = 1/4 >=0 (real roots), and
-    # normal-form r = ((a²-2a-4b)/4)/x² = ((4-4-3/4)/4)/x² = (-3/16)/x² < 0.
+_THM_EULER = "MachLib.SturmNonOscillation.sturm_euler_no_positive_bump"
+
+
+def test_euler_r_negative_is_certified_via_euler_theorem():
+    # Euler with r = c/x², -1/4 <= c < 0: non-oscillatory even though r < 0.
+    # a=2, b=3/16: indicial disc (a-1)²-4b = 1/4 >= 0 (real roots, EML-finite),
+    # normal-form r = ((a²-2a-4b)/4)/x² = (-3/16)/x² < 0. Now machine-checked by
+    # the dedicated Euler theorem (the regular-singular -1/4 band).
     c = certify_non_oscillation(2 / x, sp.Rational(3, 16) / x**2, "pos")
     assert isinstance(c, NonOscillationCertificate)
-    assert c.certified is False           # non-oscillatory but r < 0
-    assert c.lean_theorem is None
-    assert "not yet Lean-certified" in c.note
+    assert c.certified is True            # non-oscillatory, r<0, Euler form
+    assert c.lean_theorem == _THM_EULER
+    assert "-1/4" in c.condition
