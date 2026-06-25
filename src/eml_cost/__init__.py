@@ -50,6 +50,7 @@ from .recommend_form import (
 )
 from .dynamics import DynamicsProfile, analyze_dynamics
 from .classify_ode import OdeClass, classify_ode
+from .lint_ode import OdeFinding, format_ode_findings, lint_ode, lint_odes
 from .validate_pne_registry import (
     REGISTRY_ODES,
     RegistryValidation,
@@ -124,6 +125,10 @@ __all__ = [
     "DynamicsProfile",
     "classify_ode",
     "OdeClass",
+    "lint_ode",
+    "lint_odes",
+    "OdeFinding",
+    "format_ode_findings",
     "validate_pne_registry",
     "RegistryValidation",
     "REGISTRY_ODES",
