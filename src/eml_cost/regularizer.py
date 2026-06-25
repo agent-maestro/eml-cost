@@ -9,8 +9,12 @@ Penalises candidate expressions by:
   - **stability_penalty** — divergence from the
     :func:`recommend_form` canonical-stable form for the four
     supported families (sigmoid / exp_decay / logistic / cosine)
+  - **eml_finiteness_penalty** — EML-infinity content (oscillation
+    modes and/or Pfaffian-but-not-EML primitives), biasing toward the
+    representable finite-EML tree class; optionally a hard feasibility
+    constraint via ``require_eml_finite``
 
-The total penalty is a weighted sum of the four. Each component
+The total penalty is a weighted sum of the five. Each component
 is explainable: ``RegularizerResult.explanation`` returns a short
 human-readable string with the per-component contribution.
 
@@ -55,7 +59,8 @@ import sympy as sp
 
 from .analyze import analyze
 from .canonicalize import canonicalize
-from .core import predict_chain_order_via_additivity
+from .core import is_pfaffian_not_eml, predict_chain_order_via_additivity
+from .dynamics import analyze_dynamics
 from .recommend_form import recommend_form
 
 
@@ -117,15 +122,31 @@ class RegularizerConfig:
         dynamics signature inferred from the regression target.
         Compared against the candidate's predicted dynamics
         counter; mismatch contributes to ``dynamics_penalty``.
+    lambda_eml_finite:
+        Weight on the EML-finiteness penalty. A candidate is
+        EML-infinity (NOT a finite EML tree) when it contains
+        oscillation modes (sin/cos) and/or Pfaffian-but-not-EML
+        primitives (Bessel, Airy, ...). The penalty is
+        ``lambda_eml_finite * (n_oscillations + is_pfaffian_not_eml)``,
+        biasing symbolic regression toward the representable
+        finite-EML class. Grounded in the differential-Galois <-> EML
+        correspondence: oscillation = the compact-torus / Infinite-Zeros
+        obstruction (see :mod:`eml_cost.classify_ode`).
+    require_eml_finite:
+        When ``True``, an EML-infinity candidate is hard-flagged
+        ``is_feasible=False`` (in addition to the soft penalty) — a
+        representability constraint for EML kernel synthesis.
     """
 
     lambda_chain: float = 0.0
     lambda_nodes: float = 0.0
     lambda_dynamics: float = 0.0
     lambda_stability: float = 0.0
+    lambda_eml_finite: float = 0.0
     max_chain_order: int = 5
     target_chain_order: Optional[int] = None
     expected_dynamics: Optional[tuple[int, int]] = None
+    require_eml_finite: bool = False
 
 
 @dataclass(frozen=True)
@@ -154,9 +175,16 @@ class RegularizerResult:
         ``(n_osc, n_decay)`` derived from the candidate's analyze
         corrections.
     is_feasible:
-        ``chain_order <= max_chain_order``.
+        ``chain_order <= max_chain_order`` (and EML-finite when
+        ``require_eml_finite`` is set).
     explanation:
         One-line human summary of the penalty breakdown.
+    eml_finiteness_penalty:
+        ``lambda_eml_finite * (n_oscillations + is_pfaffian_not_eml)``.
+    is_eml_finite:
+        ``True`` when the candidate has no oscillation modes and no
+        Pfaffian-but-not-EML primitives — i.e. it is representable as a
+        finite EML tree.
     """
 
     chain_penalty: float
@@ -169,6 +197,8 @@ class RegularizerResult:
     predicted_dynamics: tuple[int, int]
     is_feasible: bool
     explanation: str = ""
+    eml_finiteness_penalty: float = 0.0
+    is_eml_finite: bool = True
 
 
 def _predicted_dynamics(result) -> tuple[int, int]:
@@ -265,13 +295,27 @@ def regularize(
             stability_penalty = float(
                 config.lambda_stability * rec.digits_saved)
 
-    total = (chain_penalty + node_penalty
-             + dynamics_penalty + stability_penalty)
+    # Component 5: EML-finiteness. A candidate is EML-infinity (outside the
+    # finite EML tree class) when it carries oscillation modes (sin/cos) and/or
+    # Pfaffian-but-not-EML primitives (Bessel, Airy, ...) — the two obstructions
+    # the differential-Galois <-> EML correspondence identifies (oscillation =
+    # the compact-torus / Infinite-Zeros Barrier). Penalise both so symbolic
+    # regression is biased toward the representable finite-EML class.
+    pne = is_pfaffian_not_eml(canonical)
+    n_osc_modes = analyze_dynamics(canonical).n_oscillations  # distinct sin/cos args
+    eml_inf_score = n_osc_modes + (1 if pne else 0)
+    is_eml_finite = eml_inf_score == 0
+    eml_finiteness_penalty = float(config.lambda_eml_finite * eml_inf_score)
+
+    total = (chain_penalty + node_penalty + dynamics_penalty
+             + stability_penalty + eml_finiteness_penalty)
 
     if config.target_chain_order is not None:
         is_feasible = chain_order == config.target_chain_order
     else:
         is_feasible = chain_order <= config.max_chain_order
+    if config.require_eml_finite and not is_eml_finite:
+        is_feasible = False
 
     parts = []
     if chain_penalty:
@@ -291,6 +335,10 @@ def regularize(
             f"(predicted={pred_dyn}, expected={config.expected_dynamics})")
     if stability_penalty:
         parts.append(f"stability={stability_penalty:.3f}")
+    if eml_finiteness_penalty:
+        parts.append(
+            f"eml_finite={eml_finiteness_penalty:.3f} "
+            f"(score={eml_inf_score}, osc={n_osc_modes}, pne={int(pne)})")
     if not parts:
         parts.append("zero penalty")
     explanation = "total={:.3f}; ".format(total) + ", ".join(parts)
@@ -306,4 +354,6 @@ def regularize(
         predicted_dynamics=pred_dyn,
         is_feasible=is_feasible,
         explanation=explanation,
+        eml_finiteness_penalty=eml_finiteness_penalty,
+        is_eml_finite=is_eml_finite,
     )
