@@ -49,6 +49,12 @@ from .recommend_form import (
     recommend_form,
 )
 from .dynamics import DynamicsProfile, analyze_dynamics
+from .classify_ode import OdeClass, classify_ode
+from .validate_pne_registry import (
+    REGISTRY_ODES,
+    RegistryValidation,
+    validate_pne_registry,
+)
 from .siblings import Sibling, corpus_domains, corpus_size, find_siblings
 from .lint import Finding, lint_file, lint_source
 from .guards import CostLimitExceeded, costlimit
@@ -116,6 +122,11 @@ __all__ = [
     "FAMILY_RHO",
     "analyze_dynamics",
     "DynamicsProfile",
+    "classify_ode",
+    "OdeClass",
+    "validate_pne_registry",
+    "RegistryValidation",
+    "REGISTRY_ODES",
     "find_siblings",
     "Sibling",
     "corpus_size",
