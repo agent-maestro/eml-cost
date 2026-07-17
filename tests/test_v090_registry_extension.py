@@ -193,7 +193,11 @@ def test_elliptic_e_pi_arity_dispatch():
     """elliptic_e/elliptic_pi collide on func.__name__ across SymPy's
     complete vs incomplete overloads — same parameter-blindness shape as
     polygamma/harmonic (0.22.0), dispatched on ARITY instead of argument
-    value here (0.23.0). Complete forms are unaffected by this fix.
+    value here (0.23.0). elliptic_e's complete form is unaffected (stays 3);
+    elliptic_pi's complete form was fixed 0.24.0 (was an unanalyzed flat 4,
+    also genuinely chain 5 — SymPy's own diff() gives dPi/dm in closed form,
+    needing a reciprocal S=1/(n-m) independent of K/E's own R=1/(m(m-1)),
+    verified vs mpmath to ~1e-19; see chain5-census exploration dir).
     """
     m = sp.Symbol("m")
     a_e_complete = analyze(sp.elliptic_e(m))
@@ -203,7 +207,7 @@ def test_elliptic_e_pi_arity_dispatch():
     assert a_e_incomplete.pfaffian_r == 5
 
     a_pi_complete = analyze(sp.elliptic_pi(x, m))
-    assert a_pi_complete.pfaffian_r == 4  # unanalyzed approximation, unchanged
+    assert a_pi_complete.pfaffian_r == 5
 
     a_pi_incomplete = analyze(sp.elliptic_pi(x, y, m))
     assert a_pi_incomplete.pfaffian_r == 5

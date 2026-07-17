@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.24.0] — 2026-07-17 — Fix: complete `elliptic_pi(n, m)` was also undercounted — chain 5, not the flat 4
+
+Same-day follow-up to 0.23.0. That release fixed the *incomplete* 3-arg
+`elliptic_pi(n, phi, m)` (was flat 4, now 5) but left the *complete* 2-arg
+`elliptic_pi(n, m)` at the old flat 4, documented as "unanalyzed — genuinely
+different question." Went back and actually analyzed it.
+
+### The derivation
+
+Following the same convention already established for `elliptic_k(m)`/
+`elliptic_e(m)` (treat `m` as the chain axis, `n` as a fixed external
+parameter — matching how Bessel's order or Mathieu's `a`/`q` are treated as
+free, not axes): SymPy's own `sp.diff(sp.elliptic_pi(n, m), m)` gives a
+closed-form derivative,
+
+```
+dPi/dm = (Pi(n,m) + E(m)/(m-1)) / (2*(n-m))
+```
+
+verified against `mpmath.ellippi`/`ellipk`/`ellipe` to ~1e-19–1e-20 at
+several `m` values. The existing `K(m)`/`E(m)` chain already needs a
+reciprocal element `R = 1/(m*(m-1))` (covers both `1/m` and `1/(m-1)`, since
+both reduce to a polynomial multiple of `R`). `Pi`'s own derivative pulls in
+a SECOND, algebraically independent reciprocal `S = 1/(n-m)` — genuinely a
+new pole (in `m`, at the fixed point `n`) that `R`'s poles (at `m=0,1`)
+don't cover for generic `n`. `S` self-closes cleanly (`S' = S^2`). Full
+chain: `{K, E, R, S, Pi}` = **5** elements — the SAME value as the
+incomplete case, reached via a structurally different route (different
+variable, different element set), not by coincidence collapsing to the same
+underlying object.
+
+### Fixed
+
+  - **`elliptic_pi(n, m)` (complete, 2-arg): was flat 4, now 5.**
+    `_pne_r_value` now has an explicit branch for the 2-arg case (previously
+    it fell through to the flat dict, which is now also 5 — kept as a
+    separate explicit branch anyway, since the derivation genuinely differs
+    from the 3-arg case and a future correction to either shouldn't
+    silently affect the other).
+  - `test_elliptic_e_pi_arity_dispatch` updated: all four
+    arity/completeness combinations now assert `5` except complete
+    `elliptic_e(m)`, which stays `3`. Full 617-test suite green (same count
+    as 0.23.0 — an existing assertion was corrected, not a new test added).
+
 ## [0.23.0] — 2026-07-17 — Fix: `elliptic_e`/`elliptic_pi` registry collided complete with incomplete forms; incomplete Π is a genuine chain-5 tower
 
 Follow-up to the multivariate-Khovanskii work in `machlib` — while checking whether

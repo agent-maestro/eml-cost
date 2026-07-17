@@ -149,11 +149,16 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     "RisingFactorial": 2,  # (x)_n = Γ(x+n)/Γ(x)
     "FallingFactorial": 2, # x(x−1)…(x−n+1) = Γ(x+1)/Γ(x−n+1)
     # Elliptic third kind
-    "elliptic_pi": 4, # Π(n,m) COMPLETE (2-arg) approximation, unanalyzed —
-                      # genuinely different question (2 free params, 0
-                      # coordinate axis), same posture as lerchphi/stieltjes.
-                      # 3-arg Π(n,phi,m) INCOMPLETE is chain 5 — see
-                      # _pne_r_value (arity-dispatched).
+    "elliptic_pi": 5, # Π(n,m) COMPLETE (2-arg), n fixed, m the axis (matches
+                      # K(m)/E(m) convention): chain {K,E,R=1/(m(m-1)),
+                      # S=1/(n-m),Pi} — R,S both genuinely needed (R for K/E's
+                      # own m(m-1) denominators, S for Pi's own EXTRA n-m
+                      # pole, algebraically independent of R). SAME value as
+                      # the 3-arg incomplete case (5), via a different
+                      # element set — see _pne_r_value (arity-dispatched) and
+                      # the chain5-census exploration dir for the derivation
+                      # (SymPy's own diff() gives the closed dPi/dm formula;
+                      # verified vs mpmath to ~1e-19).
     # Zeta family extension
     "dirichlet_eta": 5,  # η(s) = (1 − 2^(1−s))·ζ(s): chain_order(ζ)=4 + 1 for the
     # non-integer/symbolic-exponent Pow node 2^(1−s) (the CLASS-1 power-convention
@@ -249,6 +254,16 @@ def _pne_r_value(fname: str, sub: sp.Basic) -> int:
     to ~1e-20 via central-difference vs mpmath at two independent parameter
     points; see the chain5-census exploration dir for the derivation and
     `verify.py` for the numeric check.
+
+    0.24.0: complete ``elliptic_pi(n, m)`` (2-arg) turned out to ALSO be
+    chain 5, via a structurally different route than the 3-arg incomplete
+    case — SymPy's own ``diff()`` gives ``dPi/dm`` in closed form (verified
+    against mpmath), and it needs a reciprocal element ``S=1/(n-m)`` that's
+    algebraically independent of the ``R=1/(m(m-1))`` element K/E already
+    need. Both arity branches now agree (5), through different element
+    sets — kept as separate explicit branches below (rather than collapsed
+    into one flat-dict lookup) since the underlying derivations differ and
+    a future correction to either one shouldn't silently affect the other.
     """
     if fname == "polygamma" and sub.args:
         n = sub.args[0]
@@ -262,6 +277,8 @@ def _pne_r_value(fname: str, sub: sp.Basic) -> int:
         return 5  # incomplete E(phi,m): {sin,cos,Delta^-1,Delta,E}
     elif fname == "elliptic_pi" and len(sub.args) >= 3:
         return 5  # incomplete Pi(n,phi,m): {sin,cos,Delta^-1,w,Pi}
+    elif fname == "elliptic_pi" and len(sub.args) == 2:
+        return 5  # complete Pi(n,m), n fixed, m axis: {K,E,R=1/(m(m-1)),S=1/(n-m),Pi}
     return PFAFFIAN_NOT_EML_R[fname]
 
 
