@@ -157,11 +157,22 @@ def test_factorials_and_pochhammer_flagged():
 
 
 def test_multigamma_and_harmonic():
-    """multigamma + harmonic — gamma-derived non-elementary."""
-    for expr in (sp.multigamma(x, 2), sp.harmonic(x)):
-        a = analyze(expr)
-        assert a.is_pfaffian_not_eml is True
-        assert a.pfaffian_r >= 3
+    """multigamma + harmonic — gamma-derived non-elementary.
+
+    harmonic(x) (implicit order m=1, ordinary harmonic numbers) is chain 2,
+    not >=3: fixed 0.21.0 (was a flat, parameter-blind 3 for every order;
+    harmonic(x,m).rewrite(sp.polygamma) shows order m reduces to
+    polygamma(m-1,x+1)+const, so m=1 inherits digamma's own chain-2 — see
+    _pne_r_value). multigamma is unaffected by that fix (chain 5, not
+    order-parametrized the same way) so keeps its own >=3 bound.
+    """
+    a_mg = analyze(sp.multigamma(x, 2))
+    assert a_mg.is_pfaffian_not_eml is True
+    assert a_mg.pfaffian_r >= 3
+
+    a_h = analyze(sp.harmonic(x))
+    assert a_h.is_pfaffian_not_eml is True
+    assert a_h.pfaffian_r == 2
 
 
 def test_elliptic_pi_flagged():

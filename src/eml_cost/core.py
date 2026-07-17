@@ -70,7 +70,15 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     # Gamma family — derivative chain Gamma -> psi -> psi' -> ...
     "gamma": 2,      # {Gamma(x), psi(x)}; Gamma' = Gamma * psi
     "loggamma": 2,   # log Gamma has derivative psi — same chain
-    "polygamma": 3,  # psi_n includes digamma (n=0) + trigamma (n=1) + ...
+    "polygamma": 3,  # FALLBACK for symbolic order only. For concrete integer
+    # n >= 0, `_pne_r_value` computes 2+n directly: {Gamma,psi} (chain 2)
+    # is the n=0/digamma case, and each further derivative psi'(=n=1,
+    # trigamma), psi''(n=2), ... requires one genuinely new chain element
+    # (no known finite algebraic closure among {psi, psi', psi'', ...} —
+    # each order's own integral representation, DLMF 5.15.1, differs from
+    # every other order). Verified 0.21.0: this flat 3 was correct only by
+    # coincidence at n=1 — it undercounted every n>=2 and OVERcounted n=0
+    # (which should be 2, matching Gamma's own chain, not 3).
     "beta": 3,       # B(x,y) = Gamma(x)*Gamma(y)/Gamma(x+y) — composition
     # Exponential / cosine integrals — extend exp/log Pfaffian chain
     "Ei": 3,         # integral of exp(t)/t; chain {exp(x), 1/x, Ei}
@@ -109,12 +117,25 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     "E1": 3,          # alias for expint(1, x)
     "Li": 3,          # offset log integral, Li(x) = li(x) − li(2)
     # Gamma family extension
-    "digamma": 2,     # ψ(x) = polygamma(0, x); chain {Γ, ψ}
-    "trigamma": 3,    # ψ'(x) = polygamma(1, x)
+    # "digamma"/"trigamma" are UNREACHABLE dead entries, kept only so the
+    # v0.9.0 key-presence test still passes: `sp.digamma(x)`/`sp.trigamma(x)`
+    # are convenience constructors that collapse immediately to a `polygamma`
+    # object at construction time (`sp.digamma(x).func.__name__ == "polygamma"`,
+    # verified 0.21.0), so no SymPy expression ever has func name "digamma" or
+    # "trigamma" for `_is_registered_pne` to match. Their intended values (2,
+    # 3) are exactly what the corrected `polygamma` special case below now
+    # computes for n=0, n=1 — see `_pne_r_value`.
+    "digamma": 2,     # ψ(x) = polygamma(0, x); chain {Γ, ψ} — dead, see above
+    "trigamma": 3,    # ψ'(x) = polygamma(1, x) — dead, see above
     "lowergamma": 3,  # γ(s, x) — incomplete lower gamma
     "uppergamma": 3,  # Γ(s, x) — incomplete upper gamma
     "multigamma": 3,  # Γ_p(x) — multivariate gamma; product of Γ
-    "harmonic": 3,    # H(n, m) — chain extends digamma
+    "harmonic": 3,    # H(n, m) — FALLBACK for symbolic m only. For concrete
+    # integer m >= 1, `_pne_r_value` computes m+1 (harmonic(x,m) rewrites
+    # exactly to polygamma(m-1,x+1) + a constant — DLMF 25.11.31/SymPy's own
+    # `.rewrite(sp.polygamma)`, verified 0.21.0 — so it inherits polygamma's
+    # own n-dependence). m=1 (ordinary harmonic numbers) -> 2, matching
+    # digamma. This flat 3 was wrong for every m != 2 before 0.21.0.
     "factorial": 2,   # n! = Γ(n+1) for non-integer extension
     "factorial2": 2,  # n!! — double factorial via Γ
     "subfactorial": 3, # !n — chain {Γ, exp, !n}
@@ -187,6 +208,33 @@ def _is_registered_pne(sub: sp.Basic) -> bool:
     return True
 
 
+def _pne_r_value(fname: str, sub: sp.Basic) -> int:
+    """Chain order for a registered PNE primitive.
+
+    A plain ``PFAFFIAN_NOT_EML_R[fname]`` dict lookup is parameter-blind — it
+    can't distinguish ``polygamma(0, x)`` (chain 2) from ``polygamma(5, x)``
+    (chain 7). This resolves the two entries whose TRUE chain order is a
+    function of the primitive's own integer argument, falling back to the
+    flat dict value (documented in ``PFAFFIAN_NOT_EML_R`` as an
+    approximation) when that argument isn't a concrete integer.
+
+    Found + fixed 0.21.0 alongside the ``dirichlet_eta``/``riemann_xi``
+    consistency fix — same underlying lesson: a name-only registry entry
+    silently averages over structure the tool could otherwise compute
+    exactly. See ``monogate-research/exploration/
+    chain5-census-theta-modular-painleve-2026-07-16/`` for the derivation.
+    """
+    if fname == "polygamma" and sub.args:
+        n = sub.args[0]
+        if n.is_Integer and n >= 0:
+            return 2 + int(n)
+    elif fname == "harmonic":
+        m = sub.args[1] if len(sub.args) >= 2 else sp.Integer(1)
+        if m.is_Integer and m >= 1:
+            return int(m) + 1
+    return PFAFFIAN_NOT_EML_R[fname]
+
+
 # ---------------------------------------------------------------------------
 # Pfaffian-but-not-EML detection
 # ---------------------------------------------------------------------------
@@ -256,7 +304,7 @@ def _collect_chain(expr: sp.Basic, chains: set[sp.Basic]) -> None:
 
     fname = getattr(func, "__name__", "")
     if fname in PFAFFIAN_NOT_EML_R and _is_registered_pne(expr):
-        r_value = PFAFFIAN_NOT_EML_R[fname]
+        r_value = _pne_r_value(fname, expr)
         for i in range(r_value):
             chains.add(sp.Symbol(f"__chain_{fname}_{i}_{hash(expr) % 10**9}"))
 
@@ -386,7 +434,7 @@ def predict_chain_order_via_additivity(expr: sp.Basic) -> int:
         # CLASS PNE — registered Pfaffian-not-elementary primitive.
         fname = getattr(func, "__name__", "")
         if fname in PFAFFIAN_NOT_EML_R and _is_registered_pne(node):
-            add_chain(node, PFAFFIAN_NOT_EML_R[fname])
+            add_chain(node, _pne_r_value(fname, node))
             continue
 
         # Add / Mul / generic container — CLASS 0 (no contribution)
@@ -440,7 +488,7 @@ def max_path_r(expr: sp.Basic) -> int:
 
     fname = getattr(func, "__name__", "")
     if fname in PFAFFIAN_NOT_EML_R:
-        r_value = PFAFFIAN_NOT_EML_R[fname]
+        r_value = _pne_r_value(fname, expr)
         if expr.args:
             return r_value + max(
                 (max_path_r(a) for a in expr.args if isinstance(a, sp.Basic)),

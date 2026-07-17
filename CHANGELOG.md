@@ -6,6 +6,70 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.22.0] — 2026-07-16 — Fix: `polygamma`/`harmonic` registry was parameter-blind
+
+Same-day follow-up to 0.21.0, same underlying lesson applied one level deeper:
+`PFAFFIAN_NOT_EML_R` is a flat `dict[str, int]` keyed by SymPy function *name*,
+with no way to vary by the function's own arguments. That's fine for primitives
+whose chain order genuinely doesn't depend on a parameter (Bessel order, Mathieu
+`a`/`q`), but `polygamma(n, x)` and `harmonic(x, m)` both have TRUE chain orders
+that grow with their own integer argument, and the registry was silently
+flattening every order to the same number.
+
+### Fixed
+
+  - **`polygamma(n, x)`: was flat 3 for every `n`, now `2 + n`** for concrete
+    integer `n >= 0`. `{Gamma, psi}` (chain 2) is the `n=0` case; each further
+    derivative `psi'` (`n=1`), `psi''` (`n=2`), … needs one genuinely new chain
+    element — there's no known finite algebraic closure among
+    `{psi, psi', psi'', …}` (each order has its own distinct integral
+    representation, DLMF 5.15.1). The old flat 3 OVERcounted `n=0` (should be 2)
+    and UNDERcounted every `n >= 2` (tetragamma should be 4, not 3; and it kept
+    growing from there) — it was only correct by coincidence at `n=1`.
+  - **`harmonic(x, m)`: was flat 3 for every `m`, now `m + 1`** for concrete
+    integer `m >= 1`. `sp.harmonic(x, m).rewrite(sp.polygamma)` shows this
+    isn't a separate derivation — it's inherited directly:
+    `harmonic(x, m)` reduces to `polygamma(m-1, x+1) + constant` for every
+    concrete `m` (verified for m=1..5), so it automatically tracks whatever
+    `polygamma` computes. `harmonic(x)` (implicit `m=1`, ordinary harmonic
+    numbers) is now chain 2, matching digamma, not the old flat 3.
+  - **`sp.digamma(x)`/`sp.trigamma(x)` were already dead code**, discovered
+    while fixing the above: both are SymPy convenience constructors that
+    collapse immediately to a `polygamma(0, x)`/`polygamma(1, x)` object at
+    construction time (`sp.digamma(x).func.__name__ == "polygamma"`) — no
+    expression can ever have `func.__name__ == "digamma"` for the registry's
+    separate `"digamma"`/`"trigamma"` entries to match. Left in place (harmless,
+    and the v0.9.0 key-presence test expects them) but now documented as
+    unreachable; their intended values were already correct and are what the
+    new `polygamma` special case computes for `n=0`/`n=1` anyway.
+
+  New `_pne_r_value(fname, sub)` helper in `core.py` centralizes this — all
+  three consumers that used to do a raw `PFAFFIAN_NOT_EML_R[fname]` lookup
+  (`pfaffian_r`'s `_collect_chain`, `predict_chain_order_via_additivity`,
+  `max_path_r`) now route through it, so the three can't drift out of sync
+  the way `dirichlet_eta`/`riemann_xi` implicitly could before 0.21.0.
+  Symbolic (non-concrete) order falls back to the old flat value, documented
+  in-registry as an approximation — same pattern already used for `hyper`
+  (chain "varies 2-4, assigned 3").
+
+### Reviewed, not changed
+
+  `lerchphi` and `stieltjes` were flagged alongside `polygamma`/`harmonic` in
+  `frontiers/ACTIVE.md` as "same parameter-blind shape" but don't actually
+  share it: neither has a SymPy `.rewrite()` path that resolves to something
+  eml-cost can cross-check (both rewrites are no-ops), and `stieltjes(n)` is a
+  pure numeric constant (`is_number=True`), not a function of a free variable
+  the way `polygamma(n, x)` is — "chain order" may not even be the right
+  question for it. Left as open items, not force-fixed.
+
+One test updated: `test_multigamma_and_harmonic` asserted `harmonic(x) ->
+pfaffian_r >= 3`, encoding the old flat-3 assumption; now asserts `== 2`.
+Full 616-test suite green otherwise — no other test hard-coded a polygamma or
+harmonic value.
+
+See `monogate-research/exploration/chain5-census-theta-modular-painleve-2026-07-16/`
+for the full derivation.
+
 ## [0.21.0] — 2026-07-16 — Fix: `dirichlet_eta`/`riemann_xi` registry-vs-detector inconsistency
 
 Fixes a real, live, easily-triggered discrepancy: the atomic registry lookup for
