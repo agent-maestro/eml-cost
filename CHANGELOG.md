@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.21.0] — 2026-07-16 — Fix: `dirichlet_eta`/`riemann_xi` registry-vs-detector inconsistency
+
+Fixes a real, live, easily-triggered discrepancy: the atomic registry lookup for
+`dirichlet_eta`/`riemann_xi` disagreed with what `analyze()` itself computes on
+SymPy's own standard `.rewrite(sp.zeta)` expansion of the same functions — i.e.
+the same mathematical object got a different `pfaffian_r` depending on whether a
+caller passed the opaque named form or the expanded form. Not a contrived edge
+case: `sp.dirichlet_eta(s).rewrite(sp.zeta)` and `sp.riemann_xi(s).rewrite(sp.zeta)`
+are one method call away from the named form.
+
+### Fixed
+
+  - **`dirichlet_eta`: 4 → 5.** η(s) = (1 − 2^(1−s))·ζ(s) — the registry only
+    counted `chain_order(ζ)=4`, missing the CLASS-1 (+1) contribution from the
+    non-integer/symbolic-exponent `Pow` node `2^(1−s)` (the power-convention
+    discovered in `chain-5-hunt-2026-04-27`, formalised in
+    `predict_chain_order_via_additivity`). Both `analyze()` on the rewritten form
+    and the additivity predictor independently land on 5.
+  - **`riemann_xi`: 6 → 7.** ξ(s) = (s(s−1)/2)·π^(−s/2)·Γ(s/2)·ζ(s) — this was
+    already corrected once, from 5 to 6, in 0.13.0 (`chain_order(Γ)+chain_order(ζ)
+    = 2+4 = 6`), but that fix applied "pure additivity" without also applying the
+    same power-convention to the `π^(−s/2)` term (also CLASS-1, +1). 7 is what both
+    `analyze()` on the rewritten form and the additivity predictor agree on.
+
+### Known follow-up, not fixed here
+
+  Analyzing `sp.dirichlet_eta(s).rewrite(sp.zeta)` **directly** (before stripping
+  the `s=1` branch) returns 6, not 5 — the detector's AST walk appears to add a
+  spurious +1 when traversing a `Piecewise` wrapper. Worked around here by
+  reasoning about the generic branch expression directly (which is what the
+  registry value is meant to describe); the `Piecewise`-traversal artifact itself
+  is a separate, not-yet-scoped detector-robustness issue.
+
+  See `monogate-research/exploration/chain5-census-theta-modular-painleve-2026-07-16/`
+  for the full derivation and live verification transcript.
+
 ## [0.20.0] — 2026-05-01 — Live profiling: `eml-cost profile`
 
 Closes the prediction loop. Until now eml-cost only **predicted**
