@@ -6,6 +6,73 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.23.0] — 2026-07-17 — Fix: `elliptic_e`/`elliptic_pi` registry collided complete with incomplete forms; incomplete Π is a genuine chain-5 tower
+
+Follow-up to the multivariate-Khovanskii work in `machlib` — while checking whether
+that arc's new local-IFT axiom unblocked anything else, picked back up the
+`chain5-census-theta-modular-painleve-2026-07-16` hunt for a genuine chain-5
+tower. Found one, sitting in SymPy's existing namespace, mis-registered.
+
+### The bug
+
+SymPy overloads `elliptic_e`/`elliptic_pi` across complete and incomplete forms
+— `elliptic_e(m)` (complete) and `elliptic_e(phi, m)` (incomplete) both have
+`func.__name__ == "elliptic_e"`, so `PFAFFIAN_NOT_EML_R`'s flat, name-only
+dict collapses them to the same chain order. Same underlying shape as the
+0.22.0 `polygamma`/`harmonic` bug (a flat dict can't see the primitive's own
+arguments), but the discriminator here is arity, not argument value.
+
+### The finding: incomplete E(φ,m)/Π(n,φ,m) are chain 5, not 3/4
+
+Derived by hand and verified numerically (central difference vs `mpmath`,
+~1e-20 agreement at two independent parameter points — see `verify.py` in
+the chain5-census exploration dir):
+
+```
+sin(phi)' = cos(phi)
+cos(phi)' = -sin(phi)
+Delta_inv' = m * sin(phi) * cos(phi) * Delta_inv^3      # Delta_inv = (1-m*sin(phi)^2)^-1/2, SELF-closes (cubic)
+Delta'     = -m * sin(phi) * cos(phi) * Delta_inv        # Delta = 1/Delta_inv does NOT self-close
+w'         = 2*n * sin(phi) * cos(phi) * w^2             # w = (1-n*sin(phi)^2)^-1, self-closes (reciprocal-type)
+E'         = Delta
+Pi'        = w * Delta_inv
+```
+
+The interesting piece: `Delta_inv` closes on its own via a CUBIC relation in
+itself (`y' = G·y³`, a legitimate Khovanskii Pfaffian relation — the
+framework doesn't require degree ≤2, just polynomial), but its own reciprocal
+`Delta` does NOT self-close the same way — `Delta' = -m·sin·cos/Delta`
+genuinely needs `Delta_inv` as a companion element. That asymmetry is why
+`F(phi,m)` (which only ever needs `Delta_inv`) stays at the already-correct
+chain 4, while `E(phi,m)` (which needs `Delta` too) and `Pi(n,phi,m)` (which
+needs `w` AND `Delta_inv`, a second independent reciprocal-type element) both
+land one higher, at chain 5.
+
+**First tool-verifiable chain-5 tower found across either round of this
+census** (`chain-5-hunt-2026-04-27` scanned SymPy's whole namespace and found
+a chain-4 ceiling; `chain5-census-theta-modular-painleve-2026-07-16`'s
+hand-derived candidates — theta, Painlevé — were either unverifiable or
+provably out of the method's reach). This one didn't need a new symbolic
+implementation or a literature dive — it was sitting in the existing,
+already-registered `elliptic_pi`/`elliptic_e` entries the whole time,
+undercounted by the same arity-blindness class of bug as 0.21.0/0.22.0.
+
+### Fixed
+
+  - **`elliptic_e(phi, m)` (incomplete, 2-arg): was flat 3, now 5.**
+    `elliptic_e(m)` (complete, 1-arg) is unaffected, stays 3.
+  - **`elliptic_pi(n, phi, m)` (incomplete, 3-arg): was flat 4, now 5.**
+    `elliptic_pi(n, m)` (complete, 2-arg) is left at the old flat
+    approximation (4) — genuinely different question (two free parameters,
+    no coordinate axis), same posture as `lerchphi`/`stieltjes` in 0.22.0:
+    reviewed, not force-fit to an answer.
+  - `elliptic_f(phi, m)` was already correct at 4 — no `func.__name__`
+    collision for F (no same-named complete form exists), and its own
+    `Delta_inv`-only closure was already right.
+  - New test (`test_elliptic_e_pi_arity_dispatch`) asserts all four
+    arity/completeness combinations exactly. Full 617-test suite green (was
+    616 — one net new test, zero regressions).
+
 ## [0.22.0] — 2026-07-16 — Fix: `polygamma`/`harmonic` registry was parameter-blind
 
 Same-day follow-up to 0.21.0, same underlying lesson applied one level deeper:

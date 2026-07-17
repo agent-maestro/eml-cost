@@ -92,8 +92,15 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     "zeta": 4,       # Riemann zeta(s) — non-trivial chain
     # Elliptic integrals — non-elementary by Liouville
     "elliptic_k": 3, # K(m) — chain {K, E, 1/m}
-    "elliptic_e": 3, # E(m) — partner of K
-    "elliptic_f": 4, # F(phi|m) — incomplete, depends on both args
+    "elliptic_e": 3, # E(m) COMPLETE (1-arg). 2-arg E(phi,m) is chain 5 — see
+                     # _pne_r_value (arity-dispatched, same fname collision
+                     # as polygamma/harmonic's parameter-blindness).
+    "elliptic_f": 4, # F(phi|m) — incomplete, depends on both args; chain
+                     # {sin(phi),cos(phi),Delta^-1,F} where Delta^-1 =
+                     # (1-m*sin(phi)^2)^-1/2 self-closes via a CUBIC relation
+                     # Delta^-1' = m*sin*cos*Delta^-3 (Khovanskii doesn't
+                     # require degree <=2, just polynomial) — no fname
+                     # collision, this one was already correct.
     # ---------------------------------------------------------------
     # Added in eml-cost 0.9.0 (S/R-#10 substrate-coverage audit). The
     # 0.3.0 expansion left 36 named SymPy non-elementary functions
@@ -142,7 +149,11 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     "RisingFactorial": 2,  # (x)_n = Γ(x+n)/Γ(x)
     "FallingFactorial": 2, # x(x−1)…(x−n+1) = Γ(x+1)/Γ(x−n+1)
     # Elliptic third kind
-    "elliptic_pi": 4, # Π(n; φ|m) — third kind, chain {K, E, Π}
+    "elliptic_pi": 4, # Π(n,m) COMPLETE (2-arg) approximation, unanalyzed —
+                      # genuinely different question (2 free params, 0
+                      # coordinate axis), same posture as lerchphi/stieltjes.
+                      # 3-arg Π(n,phi,m) INCOMPLETE is chain 5 — see
+                      # _pne_r_value (arity-dispatched).
     # Zeta family extension
     "dirichlet_eta": 5,  # η(s) = (1 − 2^(1−s))·ζ(s): chain_order(ζ)=4 + 1 for the
     # non-integer/symbolic-exponent Pow node 2^(1−s) (the CLASS-1 power-convention
@@ -223,6 +234,21 @@ def _pne_r_value(fname: str, sub: sp.Basic) -> int:
     silently averages over structure the tool could otherwise compute
     exactly. See ``monogate-research/exploration/
     chain5-census-theta-modular-painleve-2026-07-16/`` for the derivation.
+
+    ``elliptic_e``/``elliptic_pi`` (0.23.0) are a DIFFERENT flavor of the
+    same bug: SymPy overloads one function name across complete and
+    incomplete forms (``elliptic_e(m)`` vs ``elliptic_e(phi, m)``), which
+    collide on ``func.__name__`` the same way ``polygamma``/``harmonic``
+    collide on their own concrete argument. Dispatched on ARITY here rather
+    than argument value. Incomplete E(phi,m)/Pi(n,phi,m) genuinely need one
+    more chain element than the flat entry: `Delta = sqrt(1-m*sin(phi)^2)`
+    itself does NOT self-close (`Delta' = -m*sin*cos*Delta^-1` needs the
+    reciprocal `Delta^-1` as a companion, even though `Delta^-1` closes on
+    ITS OWN via a cubic relation) — an asymmetry between a sqrt-type element
+    and its own reciprocal that the original flat values missed. Verified
+    to ~1e-20 via central-difference vs mpmath at two independent parameter
+    points; see the chain5-census exploration dir for the derivation and
+    `verify.py` for the numeric check.
     """
     if fname == "polygamma" and sub.args:
         n = sub.args[0]
@@ -232,6 +258,10 @@ def _pne_r_value(fname: str, sub: sp.Basic) -> int:
         m = sub.args[1] if len(sub.args) >= 2 else sp.Integer(1)
         if m.is_Integer and m >= 1:
             return int(m) + 1
+    elif fname == "elliptic_e" and len(sub.args) >= 2:
+        return 5  # incomplete E(phi,m): {sin,cos,Delta^-1,Delta,E}
+    elif fname == "elliptic_pi" and len(sub.args) >= 3:
+        return 5  # incomplete Pi(n,phi,m): {sin,cos,Delta^-1,w,Pi}
     return PFAFFIAN_NOT_EML_R[fname]
 
 

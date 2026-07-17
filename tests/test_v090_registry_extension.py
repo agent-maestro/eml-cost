@@ -176,10 +176,37 @@ def test_multigamma_and_harmonic():
 
 
 def test_elliptic_pi_flagged():
-    """Π(n; φ|m) — third kind, completes the elliptic family."""
+    """Π(n; φ|m) — third kind, completes the elliptic family.
+
+    Incomplete (3-arg) Π(n,phi,m) is chain 5, not the flat 4: fixed 0.23.0.
+    {sin(phi),cos(phi),Delta^-1,w} where Delta^-1=(1-m*sin(phi)^2)^-1/2 and
+    w=(1-n*sin(phi)^2)^-1 both self-close independently, then Pi'=w*Delta^-1
+    is the +1 closure — 5 elements total, verified to ~1e-20 vs mpmath.ellippi
+    at two independent parameter points (see chain5-census exploration dir).
+    """
     a = analyze(sp.elliptic_pi(x, y, sp.Symbol("m")))
     assert a.is_pfaffian_not_eml is True
-    assert a.pfaffian_r >= 4
+    assert a.pfaffian_r == 5
+
+
+def test_elliptic_e_pi_arity_dispatch():
+    """elliptic_e/elliptic_pi collide on func.__name__ across SymPy's
+    complete vs incomplete overloads — same parameter-blindness shape as
+    polygamma/harmonic (0.22.0), dispatched on ARITY instead of argument
+    value here (0.23.0). Complete forms are unaffected by this fix.
+    """
+    m = sp.Symbol("m")
+    a_e_complete = analyze(sp.elliptic_e(m))
+    assert a_e_complete.pfaffian_r == 3
+
+    a_e_incomplete = analyze(sp.elliptic_e(x, m))
+    assert a_e_incomplete.pfaffian_r == 5
+
+    a_pi_complete = analyze(sp.elliptic_pi(x, m))
+    assert a_pi_complete.pfaffian_r == 4  # unanalyzed approximation, unchanged
+
+    a_pi_incomplete = analyze(sp.elliptic_pi(x, y, m))
+    assert a_pi_incomplete.pfaffian_r == 5
 
 
 def test_zeta_family_extension():
