@@ -213,6 +213,28 @@ def test_elliptic_e_pi_arity_dispatch():
     assert a_pi_incomplete.pfaffian_r == 5
 
 
+def test_polylog_order_dispatch():
+    """Li_n(x) -- fixed 0.25.0, was a flat, parameter-blind 3 for every
+    order (same bug class as polygamma/harmonic/elliptic_e/elliptic_pi
+    above). Li_n is n iterated integrals starting from log (Li_1 =
+    -log(1-x), chain 1), each integration adjunction costing exactly 1, so
+    Li_n = chain n for concrete integer n >= 1 (see _pne_r_value and
+    monogate-research/exploration/Frontier_C_hypergeometric_chain_2026_05_10/
+    FINDINGS.md, which measured Li_2 as chain 3 -- an overcount vs. the
+    differential structure -- and flagged the fix as the most actionable
+    open calibration question). Symbolic order falls back to the flat
+    value (3), same fallback convention as every other entry.
+    """
+    for n in (1, 2, 3, 4, 5):
+        a = analyze(sp.polylog(n, x))
+        assert a.is_pfaffian_not_eml is True
+        assert a.pfaffian_r == n
+
+    n_sym = sp.Symbol("n", positive=True, integer=True)
+    a_sym = analyze(sp.polylog(n_sym, x))
+    assert a_sym.pfaffian_r == 3
+
+
 def test_zeta_family_extension():
     """dirichlet_eta, lerchphi, stieltjes, riemann_xi — flagged."""
     cases = [

@@ -88,7 +88,16 @@ PFAFFIAN_NOT_EML_R: dict[str, int] = {
     "Shi": 2,        # hyperbolic sine integral
     "Chi": 2,        # hyperbolic cosine integral
     # Polylog / zeta — iterated exp/log integrals
-    "polylog": 3,    # Li_2 (dilog); Li_k chain order ~ k+1 for k >= 2
+    "polylog": 3,    # FALLBACK for symbolic/non-integer order only. For
+    # concrete integer n >= 1, `_pne_r_value` computes n directly: Li_n is n
+    # iterated integrals from log (Li_1 = -log(1-x), chain 1), each
+    # integration adjunction costing exactly 1 (same per-step cost every
+    # other iterated-integral primitive in this registry uses), so Li_n =
+    # chain n. Same parameter-blindness class as polygamma/harmonic/
+    # elliptic_e/elliptic_pi below — found via
+    # `monogate-research/exploration/Frontier_C_hypergeometric_chain_2026_05_10/`
+    # (Li_2 measured as chain 3 here, an overcount vs. the differential
+    # structure: Li_2 = one integral of log(1-t)/t, chain 2 expected).
     "zeta": 4,       # Riemann zeta(s) — non-trivial chain
     # Elliptic integrals — non-elementary by Liouville
     "elliptic_k": 3, # K(m) — chain {K, E, 1/m}
@@ -264,6 +273,17 @@ def _pne_r_value(fname: str, sub: sp.Basic) -> int:
     sets — kept as separate explicit branches below (rather than collapsed
     into one flat-dict lookup) since the underlying derivations differ and
     a future correction to either one shouldn't silently affect the other.
+
+    ``polylog`` (0.25.0) is the same parameter-blindness bug as
+    ``polygamma``/``harmonic`` (chain order is a function of the primitive's
+    own first argument, not a fixed constant), found via
+    ``Frontier_C_hypergeometric_chain_2026_05_10/FINDINGS.md``'s "polylog
+    calibration is the most actionable open question" note: `Li_n(x)` is `n`
+    iterated integrals starting from `log` (`Li_1 = -log(1-x)`, chain 1),
+    each integration adjunction costing exactly 1 — so `Li_n` = chain `n`,
+    for concrete integer `n >= 1`. Falls back to the flat dict value (3) for
+    symbolic or non-positive-integer order, same fallback convention as
+    every other entry in this function.
     """
     if fname == "polygamma" and sub.args:
         n = sub.args[0]
@@ -273,6 +293,10 @@ def _pne_r_value(fname: str, sub: sp.Basic) -> int:
         m = sub.args[1] if len(sub.args) >= 2 else sp.Integer(1)
         if m.is_Integer and m >= 1:
             return int(m) + 1
+    elif fname == "polylog" and sub.args:
+        n = sub.args[0]
+        if n.is_Integer and n >= 1:
+            return int(n)
     elif fname == "elliptic_e" and len(sub.args) >= 2:
         return 5  # incomplete E(phi,m): {sin,cos,Delta^-1,Delta,E}
     elif fname == "elliptic_pi" and len(sub.args) >= 3:
