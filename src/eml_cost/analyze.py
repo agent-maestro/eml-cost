@@ -12,6 +12,7 @@ from typing import Any, Union
 
 import sympy as sp
 
+from ._dag import fold
 from .core import (
     eml_depth,
     is_pfaffian_not_eml,
@@ -91,9 +92,38 @@ class AnalyzeResult:
 # return path-restricted corrections without depending on undocumented
 # private symbols downstream.
 def _corrections_along_max_path(expr: sp.Basic) -> tuple[int, int, int]:
-    """Walk along the deepest path, accumulating (c_osc, c_composite, delta_fused)."""
+    """Walk along the deepest path, accumulating (c_osc, c_composite, delta_fused).
+
+    Evaluated once per distinct node (``_dag.fold``, 0.26.0): a reused subexpression is one node
+    under several parents, and the recursive form walked it once per path."""
+    return fold(expr, _corrections_rule)
+
+
+def _none(values: list) -> tuple[int, int, int]:
+    return (0, 0, 0)
+
+
+def _fused(values: list) -> tuple[int, int, int]:
+    sub = values[0]
+    return (sub[0], sub[1], sub[2] + 1)
+
+
+def _best(values: list) -> tuple[int, int, int]:
+    best: tuple[int, int, int] = (0, 0, 0)
+    best_total = -1
+    for sub in values:
+        total = sub[0] + sub[1] - sub[2]
+        if total > best_total:
+            best = sub
+            best_total = total
+    return best
+
+
+def _corrections_rule(expr: sp.Basic):
+    """One step of :func:`_corrections_along_max_path`: (what it reads, how it combines them), each
+    branch the recursive form's, in its order."""
     if not isinstance(expr, sp.Basic) or expr.is_Atom:
-        return (0, 0, 0)
+        return (), _none
 
     # F-family fusion: log(c + exp(g)) and 1/(1+exp(-g))
     if isinstance(expr, sp.log):
@@ -101,11 +131,9 @@ def _corrections_along_max_path(expr: sp.Basic) -> tuple[int, int, int]:
         if isinstance(inner, sp.Add) and len(inner.args) == 2:
             a1, a2 = inner.args
             if a1.is_constant() and isinstance(a2, sp.exp):
-                sub = _corrections_along_max_path(a2.args[0])
-                return (sub[0], sub[1], sub[2] + 1)
+                return (a2.args[0],), _fused
             if a2.is_constant() and isinstance(a1, sp.exp):
-                sub = _corrections_along_max_path(a1.args[0])
-                return (sub[0], sub[1], sub[2] + 1)
+                return (a1.args[0],), _fused
 
     if isinstance(expr, sp.Pow) and expr.args[1] == -1:
         inner = expr.args[0]
@@ -114,33 +142,19 @@ def _corrections_along_max_path(expr: sp.Basic) -> tuple[int, int, int]:
                 if isinstance(arg, sp.exp):
                     g = arg.args[0]
                     inner_g = -g if g.could_extract_minus_sign() else g
-                    sub = _corrections_along_max_path(inner_g)
-                    return (sub[0], sub[1], sub[2] + 1)
-
-    func = expr.func
+                    return (inner_g,), _fused
 
     if isinstance(expr, (sp.sin, sp.cos)):
-        sub = _corrections_along_max_path(expr.args[0])
-        return (sub[0] + 1, sub[1], sub[2])
+        return (expr.args[0],), lambda values: (values[0][0] + 1, values[0][1], values[0][2])
 
     if isinstance(expr, sp.tan):
-        sub = _corrections_along_max_path(expr.args[0])
-        return (sub[0], sub[1] + 1, sub[2])  # calibrated: +1 per tan
+        # calibrated: +1 per tan
+        return (expr.args[0],), lambda values: (values[0][0], values[0][1] + 1, values[0][2])
 
     if not expr.args:
-        return (0, 0, 0)
+        return (), _none
 
-    best: tuple[int, int, int] = (0, 0, 0)
-    best_total = -1
-    for arg in expr.args:
-        if not isinstance(arg, sp.Basic):
-            continue
-        sub = _corrections_along_max_path(arg)
-        total = sub[0] + sub[1] - sub[2]
-        if total > best_total:
-            best = sub
-            best_total = total
-    return best
+    return tuple(arg for arg in expr.args if isinstance(arg, sp.Basic)), _best
 
 
 def analyze(expr: Union[str, sp.Basic]) -> AnalyzeResult:

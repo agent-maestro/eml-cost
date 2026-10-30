@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import sympy as sp
 
+from ._dag import fold, nodes
+
 
 __all__ = [
     "PFAFFIAN_NOT_EML_R",
@@ -320,10 +322,7 @@ def is_pfaffian_not_eml(expr: sp.Basic) -> bool:
     """
     if not isinstance(expr, sp.Basic):
         return False
-    for sub in sp.preorder_traversal(expr):
-        if _is_registered_pne(sub):
-            return True
-    return False
+    return any(_is_registered_pne(sub) for sub in nodes(expr))
 
 
 # ---------------------------------------------------------------------------
@@ -332,14 +331,15 @@ def is_pfaffian_not_eml(expr: sp.Basic) -> bool:
 
 
 def _collect_chain(expr: sp.Basic, chains: set[sp.Basic]) -> None:
-    if not isinstance(expr, sp.Basic):
-        return
-    if expr.is_Atom:
-        return
+    """Add the chain generators of every node of ``expr`` to ``chains``: a set, so visiting each
+    distinct node once (``nodes``) adds exactly what visiting it once per path did."""
+    for node in nodes(expr):
+        if not node.is_Atom:
+            _node_chain(node, chains)
 
-    for arg in expr.args:
-        _collect_chain(arg, chains)
 
+def _node_chain(expr: sp.Basic, chains: set[sp.Basic]) -> None:
+    """The chain generators ``expr`` itself contributes (its arguments' are their own)."""
     func = expr.func
 
     if func is sp.exp or func is sp.log:
@@ -465,9 +465,7 @@ def predict_chain_order_via_additivity(expr: sp.Basic) -> int:
             total += weight
             seen_chains.add(key)
 
-    for node in sp.preorder_traversal(expr):
-        if not isinstance(node, sp.Basic):
-            continue
+    for node in nodes(expr):     # each distinct node once: ``add_chain`` dedupes on the key anyway
         if node.is_Atom:
             continue
 
@@ -526,51 +524,64 @@ def max_path_r(expr: sp.Basic) -> int:
     products like ``f(x) * g(y)`` this is dramatically smaller than total r,
     capturing the parallel-composition behavior of EML routing depth.
     """
+    return fold(expr, _max_path_rule)
+
+
+def _zero(values: list) -> int:
+    return 0
+
+
+def _plus(k: int):
+    return lambda values: k + values[0]
+
+
+def _max_or(default: int, plus: int = 0):
+    return lambda values: plus + max(values, default=default)
+
+
+def _max_path_rule(expr: sp.Basic):
+    """One step of :func:`max_path_r`: (what it reads, how it combines them). Each branch is the
+    recursive form's, in its order; ``fold`` evaluates it once per distinct node."""
     if not isinstance(expr, sp.Basic):
-        return 0
+        return (), _zero
     if expr.is_Atom:
-        return 0
+        return (), _zero
 
     func = expr.func
 
     if func is sp.exp or func is sp.log:
-        return 1 + max_path_r(expr.args[0])
+        return (expr.args[0],), _plus(1)
 
     if isinstance(expr, _SIN_LIKE):
-        return 2 + max_path_r(expr.args[0])
+        return (expr.args[0],), _plus(2)
 
     if isinstance(expr, sp.tan):
-        return 1 + max_path_r(expr.args[0])
+        return (expr.args[0],), _plus(1)
 
     if isinstance(expr, _TANH_LIKE):
-        return 1 + max_path_r(expr.args[0])
+        return (expr.args[0],), _plus(1)
 
     if isinstance(expr, _HYPER_PAIR):
-        return 2 + max_path_r(expr.args[0])
+        return (expr.args[0],), _plus(2)
 
     if func is sp.Pow:
         base, exponent = expr.args
         if exponent.is_Integer:
-            return max_path_r(base)
-        return 1 + max(max_path_r(base), max_path_r(exponent))
+            return (base,), _plus(0)
+        return (base, exponent), _max_or(0, plus=1)
 
     if func is sp.Add or func is sp.Mul:
-        return max((max_path_r(a) for a in expr.args), default=0)
+        return expr.args, _max_or(0)
 
+    basic = tuple(a for a in expr.args if isinstance(a, sp.Basic))
     fname = getattr(func, "__name__", "")
     if fname in PFAFFIAN_NOT_EML_R:
         r_value = _pne_r_value(fname, expr)
         if expr.args:
-            return r_value + max(
-                (max_path_r(a) for a in expr.args if isinstance(a, sp.Basic)),
-                default=0,
-            )
-        return r_value
+            return basic, _max_or(0, plus=r_value)
+        return (), lambda values: r_value
 
-    return max(
-        (max_path_r(a) for a in expr.args if isinstance(a, sp.Basic)),
-        default=0,
-    )
+    return basic, _max_or(0)
 
 
 # ---------------------------------------------------------------------------
@@ -626,49 +637,51 @@ def eml_depth(expr: sp.Basic) -> int:
 
 
 def _eml_depth_inner(expr: sp.Basic) -> int:
+    return fold(expr, _eml_depth_rule)
+
+
+def _eml_depth_rule(expr: sp.Basic):
+    """One step of :func:`eml_depth` (see :func:`_max_path_rule`)."""
     if not isinstance(expr, sp.Basic):
-        return 0
+        return (), _zero
     if expr.is_Atom:
-        return 0
+        return (), _zero
 
     inner_g = _is_lead_pattern(expr)
     if inner_g is not None:
-        return 1 + _eml_depth_inner(inner_g)
+        return (inner_g,), _plus(1)
 
     inner_g = _is_sigmoid_pattern(expr)
     if inner_g is not None:
-        return 1 + _eml_depth_inner(inner_g)
+        return (inner_g,), _plus(1)
 
     func = expr.func
 
     if func is sp.exp or func is sp.log:
-        return 1 + _eml_depth_inner(expr.args[0])
+        return (expr.args[0],), _plus(1)
 
     if isinstance(expr, _SIN_LIKE):
-        return 3 + _eml_depth_inner(expr.args[0])
+        return (expr.args[0],), _plus(3)
 
     if isinstance(expr, sp.tan):
-        return 4 + _eml_depth_inner(expr.args[0])
+        return (expr.args[0],), _plus(4)
 
     if isinstance(expr, _TANH_LIKE):
-        return 1 + _eml_depth_inner(expr.args[0])
+        return (expr.args[0],), _plus(1)
 
     if isinstance(expr, _HYPER_PAIR):
-        return 1 + _eml_depth_inner(expr.args[0])
+        return (expr.args[0],), _plus(1)
 
     if func is sp.Pow:
         base, exponent = expr.args
         if exponent.is_Integer and exponent >= 0:
-            return 1 + _eml_depth_inner(base)
-        return 1 + max(_eml_depth_inner(base), _eml_depth_inner(exponent))
+            return (base,), _plus(1)
+        return (base, exponent), _max_or(0, plus=1)
 
     if func is sp.Add or func is sp.Mul:
-        return 1 + max(_eml_depth_inner(a) for a in expr.args)
+        return expr.args, lambda values: 1 + max(values)
 
-    return 1 + max(
-        (_eml_depth_inner(a) for a in expr.args if isinstance(a, sp.Basic)),
-        default=-1,
-    )
+    return tuple(a for a in expr.args if isinstance(a, sp.Basic)), _max_or(-1, plus=1)
 
 
 # ---------------------------------------------------------------------------
@@ -682,19 +695,19 @@ def structural_overhead(expr: sp.Basic) -> int:
     These contribute to EML tree depth but have no Pfaffian chain analog —
     they are tree-structural overhead, not transcendental cost.
     """
+    return fold(expr, _overhead_rule)
+
+
+def _overhead_rule(expr: sp.Basic):
+    """One step of :func:`structural_overhead` (see :func:`_max_path_rule`)."""
     if not isinstance(expr, sp.Basic) or expr.is_Atom:
-        return 0
+        return (), _zero
     func = expr.func
-    children_max = (
-        max((structural_overhead(a) for a in expr.args), default=0)
-        if expr.args
-        else 0
-    )
     if func is sp.Add or func is sp.Mul:
-        return 1 + children_max
+        return expr.args, _max_or(0, plus=1)
     if func is sp.Pow:
         exponent = expr.args[1]
         if exponent.is_Integer and exponent >= 0:
-            return 1 + structural_overhead(expr.args[0])
-        return children_max
-    return children_max
+            return (expr.args[0],), _plus(1)
+        return expr.args, _max_or(0)
+    return expr.args, _max_or(0)

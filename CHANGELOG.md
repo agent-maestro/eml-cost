@@ -6,6 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will adhere to [Semantic Versioning](https://semver.org/) once
 the public 1.0.0 release ships.
 
+## [0.26.0] — 2026-10-29 — Performance: every detector walks the DAG, not the tree
+
+`analyze` and `analyze_dynamics` are now linear in the number of DISTINCT
+nodes of an expression, where they were linear in the size of its tree.
+
+### Why
+
+A program that reuses a value builds a DAG: `t = g(s, s)` puts the one node
+`s` under `g` twice, and a chain of N such reuses has a tree of 2^N leaves.
+Recursive filters and controllers written with intermediate values are
+exactly this shape. Every detector recursed once per PATH to a node, so its
+time was the tree's size. Measured through Monogate Forge's profiler: a
+scalar Kalman filter over 10 measurements (each step reuses the previous
+estimate twice and the predicted covariance three times) spent 9.4 s in
+`analyze` alone, and each further measurement multiplied it by about 2.8.
+With Forge's own walks fixed the same way, the whole compile over 20
+measurements now takes 0.3 s.
+
+### Changed
+
+- New private module `eml_cost._dag`: `nodes(expr)` (each object once, in
+  preorder) and `fold(expr, rule)` (each object evaluated once, children
+  first, on an explicit stack).
+- `max_path_r`, `eml_depth`, `structural_overhead` and the path corrections
+  are `fold` rules -- each branch the recursive form's, in its order.
+  `pfaffian_r`, `is_pfaffian_not_eml`, `predict_chain_order_via_additivity`
+  and both `analyze_dynamics` collectors visit each distinct node once.
+- `analyze_dynamics` no longer keys its distinct-argument sets on
+  `srepr(arg)`: equal `srepr` implies `==`, so the sets were already the
+  `==`-distinct arguments, and printing each argument once per path was the
+  exponential part.
+- Depth is no longer bounded by Python's recursion limit: the recursive
+  detectors spent two frames a level, and 3,000 nested `exp` raised
+  `RecursionError` from `max_path_r`, `eml_depth` and `pfaffian_r`.
+
+### Unchanged, and how that was checked
+
+No result moves. All eight detectors (`analyze`, `analyze_dynamics`,
+`pfaffian_r`, `max_path_r`, `eml_depth`, `structural_overhead`,
+`is_pfaffian_not_eml`, `predict_chain_order_via_additivity`) were run on
+1,289 expressions before and after -- every input Forge's profiler hands
+`analyze`/`analyze_dynamics` over the eml-stdlib corpus and Forge's
+examples, plus `bench/adversarial.csv` -- and all 10,312 results, raised
+exceptions included, are identical. The 618 existing tests pass unchanged;
+`tests/test_dag_walks.py` adds 8.
+
+Not changed: `fingerprint` still hashes `str(expression)`, and the size
+estimates in `estimate_time`, `predict_precision_loss` and `rewrite` still
+count tree nodes (a size, by their definition). None of them is on
+`analyze`'s path.
+
+(0.25.0, the `polylog` parameter fix, shipped without an entry here; its
+commit message is the record.)
+
 ## [0.24.0] — 2026-07-17 — Fix: complete `elliptic_pi(n, m)` was also undercounted — chain 5, not the flat 4
 
 Same-day follow-up to 0.23.0. That release fixed the *incomplete* 3-arg

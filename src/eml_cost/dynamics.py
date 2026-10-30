@@ -52,6 +52,7 @@ from typing import Union
 
 import sympy as sp
 
+from ._dag import nodes
 from .analyze import analyze
 
 __all__ = ["DynamicsProfile", "analyze_dynamics"]
@@ -121,23 +122,23 @@ def _collect_distinct_args(
 
     Two arguments are considered the same if their canonical SymPy
     forms are equal (``a.equals(b)`` is too slow; we use SymPy's
-    structural hash via dict deduplication).
+    structural equality and hash, i.e. set deduplication).
+
+    Until 0.26.0 this keyed a dict on ``srepr(arg)`` and returned the
+    SET of its values. Equal ``srepr`` implies ``==``, so the set the
+    caller got was already the ``==``-distinct arguments; the ``srepr``
+    only cost a print of every argument once per path to it, which is
+    exponential for a reused subexpression (``_dag``). Each distinct
+    node is now visited once and nothing is printed.
     """
-    seen: dict[str, sp.Expr] = {}
-    for sub in sp.preorder_traversal(expr):
-        if isinstance(sub, op_class):
-            arg = sub.args[0]
-            key = sp.srepr(arg)
-            if key not in seen:
-                seen[key] = arg
-    return set(seen.values())
+    return {sub.args[0] for sub in nodes(expr) if isinstance(sub, op_class)}
 
 
 def _has_static_structure(expr: sp.Basic) -> bool:
     """True if ``expr`` contains non-trivial polynomial / algebraic
     structure (Add, Mul with multiple operands, Pow with non-trivial
     exponent, sqrt, log)."""
-    for sub in sp.preorder_traversal(expr):
+    for sub in nodes(expr):
         if isinstance(sub, sp.Add) and len(sub.args) >= 2:
             return True
         if isinstance(sub, sp.Mul) and len(sub.args) >= 2:
@@ -186,11 +187,11 @@ def analyze_dynamics(expr: Union[sp.Expr, str]) -> DynamicsProfile:
 
     osc_args = _collect_distinct_args(expr, sp.cos)
     osc_args |= _collect_distinct_args(expr, sp.sin)
-    # Coalesce sin(g) and cos(g) sharing the same g into a single mode.
-    coalesced: dict[str, sp.Expr] = {}
-    for a in osc_args:
-        coalesced[sp.srepr(a)] = a
-    n_osc = len(coalesced)
+    # sin(g) and cos(g) sharing the same g are one mode: the set union
+    # coalesces them. (A dict keyed on srepr re-coalesced the union
+    # until 0.26.0; its elements are ==-distinct, so their sreprs were
+    # already distinct and it never merged anything.)
+    n_osc = len(osc_args)
 
     decay_args = _collect_distinct_args(expr, sp.exp)
     n_decay = len(decay_args)
